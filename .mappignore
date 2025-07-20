@@ -1,0 +1,30 @@
+# Ignore source files
+src/
+node_modules/
+package-lock.json
+yarn.lock
+
+# Ignore development files
+*.log
+.env
+.env.*
+.DS_Store
+
+# Ignore build tools
+webpack.*.js
+config-overrides.js
+build-production.js
+craco.config.js
+
+# Ignore documentation
+README.md
+*.md
+
+# Ignore git
+.git/
+.gitignore
+
+# Ignore tests
+__tests__/
+*.test.js
+*.spec.js

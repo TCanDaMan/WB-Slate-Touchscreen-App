@@ -1,0 +1,16 @@
+{
+  "name": "WBD Executive Slate Dashboard",
+  "description": "Interactive touchscreen dashboard for Warner Bros. Discovery executive slate planning",
+  "version": "1.0.0",
+  "api_version": "1.0",
+  "kind": "web",
+  "permissions": [
+    "boards:read",
+    "boards:write"
+  ],
+  "default_height": 600,
+  "supports": {
+    "dark_theme": true,
+    "monday_view": true
+  }
+}

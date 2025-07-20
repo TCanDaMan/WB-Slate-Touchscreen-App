@@ -1,0 +1,8 @@
+{
+  "app_id": 10450874,
+  "app_version_id": 10940053,
+  "root": "./build",
+  "build_command": "npm run build",
+  "install_command": "npm install",
+  "public_path": "/"
+}
