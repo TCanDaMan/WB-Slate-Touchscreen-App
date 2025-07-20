@@ -1,2 +1,0 @@
-# WB Slate Touchscreen App
-
