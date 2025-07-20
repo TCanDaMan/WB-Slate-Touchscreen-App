@@ -1879,7 +1879,10 @@ const WBDExecutiveSlateDashboard = () => {
               {themeMode === 'regular' ? '☀️' : themeMode === 'dark' ? '🌙' : '🌌'}
             </button>
             <button 
-              onClick={() => setShowCustomization(!showCustomization)} 
+              onClick={() => {
+                console.log('Customize button clicked, current state:', showCustomization);
+                setShowCustomization(!showCustomization);
+              }} 
               className="customize-trigger-button"
               style={{
                 background: 'linear-gradient(135deg, var(--wbd-primary) 0%, var(--wbd-primary-light) 100%)',
