@@ -1840,118 +1840,90 @@ const WBDExecutiveSlateDashboard = () => {
           ⚠️ Column Mapping
         </div>
       )}
-      {/* Executive Header with Settings */}
-      <Box className="card" style={{ marginBottom: 16, padding: '16px 20px' }}>
-        <div className="wbd-header">
-          <div className="wbd-logo-area">
+      {/* Executive Header with Settings - Single Line Layout */}
+      <Box className="card header-card" style={{ marginBottom: 12, padding: '12px 16px' }}>
+        <div className="wbd-header-single-line">
+          {/* Logo and Title */}
+          <div className="wbd-logo-title">
             <div className="wbd-shield">WB</div>
-            <div className="header-content">
-              <h1 className="dashboard-title">Executive Slate Planning</h1>
-              <p className="dashboard-subtitle">Strategic content portfolio management • 2025-2029</p>
-            </div>
+            <h1 className="dashboard-title-inline">Executive Slate</h1>
           </div>
-        </div>
-        
-        {/* Touch-friendly Tab Navigation - Moved to header */}
-        <div className="dashboard-tabs touch-optimized header-tabs" style={{ marginTop: '12px', marginBottom: '0' }}>
-          <button 
-            className={activeTab === 'summary' ? 'tab active' : 'tab'} 
-            onClick={() => setActiveTab('summary')}
-          >
-            <span className="tab-icon">📊</span>
-            <span className="tab-label">Summary</span>
-          </button>
-          <button 
-            className={activeTab === 'financial' ? 'tab active' : 'tab'} 
-            onClick={() => setActiveTab('financial')}
-          >
-            <span className="tab-icon">💰</span>
-            <span className="tab-label">Financial</span>
-          </button>
-          <button 
-            className={activeTab === 'timeline' ? 'tab active' : 'tab'} 
-            onClick={() => setActiveTab('timeline')}
-          >
-            <span className="tab-icon">📅</span>
-            <span className="tab-label">Timeline</span>
-          </button>
-          <button 
-            className={activeTab === 'customize' ? 'tab active' : 'tab'} 
-            onClick={() => setActiveTab('customize')}
-          >
-            <span className="tab-icon">⚙️</span>
-            <span className="tab-label">Settings</span>
-          </button>
-        </div>
-        
-        <div className="wbd-header-row2">
-          <div className="header-controls">
-            <div className="executive-metrics">
-              <div className="card badge financial">
-                <span role="img" aria-label="calendar">📅</span> {totalMetrics.totalTitles} Titles
-              </div>
-              <div className="card badge financial">
-                <span role="img" aria-label="dollar">💰</span> {formatCurrency(totalMetrics.totalInvestment)} Investment
-              </div>
-              <div className="card badge financial">
-                <span role="img" aria-label="trending">📈</span> {formatCurrency(totalMetrics.totalRevenue)} Revenue
-              </div>
-              <div className="card badge financial">
-                <span role="img" aria-label="users">👥</span> {calculateROI(totalMetrics.totalRevenue, totalMetrics.totalInvestment * 0.6, totalMetrics.totalInvestment * 0.4)}% ROI
-              </div>
-            </div>
-            <div className="dashboard-filters" style={{ display: 'flex', gap: '12px', alignItems: 'center', marginRight: 16 }}>
-              <select value={filterYear} onChange={(e) => setFilterYear(e.target.value)} className="monday-style-dropdown">
-                {uniqueYears.map(year => <option key={year} value={year}>{year}</option>)}
-              </select>
-              <select value={filterGenre} onChange={(e) => setFilterGenre(e.target.value)} className="monday-style-dropdown">
-                {uniqueGenres.map(genre => <option key={genre} value={genre}>{genre}</option>)}
-              </select>
-              <select value={filterStatus} onChange={(e) => setFilterStatus(e.target.value)} className="monday-style-dropdown">
-                {uniqueStatuses.map(status => <option key={status} value={status}>{status}</option>)}
-              </select>
-            </div>
+          
+          {/* Tabs */}
+          <div className="dashboard-tabs-inline">
+            <button 
+              className={activeTab === 'summary' ? 'tab-inline active' : 'tab-inline'} 
+              onClick={() => setActiveTab('summary')}
+              title="Summary View"
+            >
+              📊
+            </button>
+            <button 
+              className={activeTab === 'financial' ? 'tab-inline active' : 'tab-inline'} 
+              onClick={() => setActiveTab('financial')}
+              title="Financial Analysis"
+            >
+              💰
+            </button>
+            <button 
+              className={activeTab === 'timeline' ? 'tab-inline active' : 'tab-inline'} 
+              onClick={() => setActiveTab('timeline')}
+              title="Timeline View"
+            >
+              📅
+            </button>
+            <button 
+              className={activeTab === 'customize' ? 'tab-inline active' : 'tab-inline'} 
+              onClick={() => setActiveTab('customize')}
+              title="Settings"
+            >
+              ⚙️
+            </button>
+          </div>
+          
+          {/* Metrics */}
+          <div className="executive-metrics-inline">
+            <span className="metric-inline">
+              <span className="metric-value">{totalMetrics.totalTitles}</span> Titles
+            </span>
+            <span className="metric-inline">
+              <span className="metric-value">{formatCurrency(totalMetrics.totalInvestment)}</span> Invest
+            </span>
+            <span className="metric-inline">
+              <span className="metric-value">{formatCurrency(totalMetrics.totalRevenue)}</span> Revenue
+            </span>
+            <span className="metric-inline roi">
+              <span className="metric-value">{calculateROI(totalMetrics.totalRevenue, totalMetrics.totalInvestment * 0.6, totalMetrics.totalInvestment * 0.4)}%</span> ROI
+            </span>
+          </div>
+          
+          {/* Filters */}
+          <div className="dashboard-filters-inline">
+            <select value={filterYear} onChange={(e) => setFilterYear(e.target.value)} className="monday-style-dropdown compact">
+              {uniqueYears.map(year => <option key={year} value={year}>{year}</option>)}
+            </select>
+            <select value={filterGenre} onChange={(e) => setFilterGenre(e.target.value)} className="monday-style-dropdown compact">
+              {uniqueGenres.map(genre => <option key={genre} value={genre}>{genre}</option>)}
+            </select>
+            <select value={filterStatus} onChange={(e) => setFilterStatus(e.target.value)} className="monday-style-dropdown compact">
+              {uniqueStatuses.map(status => <option key={status} value={status}>{status}</option>)}
+            </select>
+          </div>
+          
+          {/* Actions */}
+          <div className="header-actions">
             <button 
               onClick={cycleTheme} 
               title={`Current: ${themeMode} mode`} 
-              className="icon-button theme-button"
-              style={{ minWidth: '60px', minHeight: '60px' }}
+              className="icon-button compact"
             >
               {themeMode === 'regular' ? '☀️' : themeMode === 'dark' ? '🌙' : '🌌'}
             </button>
             <button 
-              onClick={() => {
-                console.log('Customize button clicked, current state:', showCustomization);
-                setShowCustomization(!showCustomization);
-              }} 
-              className="customize-trigger-button"
-              style={{
-                background: 'linear-gradient(135deg, var(--wbd-primary) 0%, var(--wbd-primary-light) 100%)',
-                color: 'white',
-                border: 'none',
-                borderRadius: '16px',
-                padding: '16px 32px',
-                fontSize: '18px',
-                fontWeight: '600',
-                cursor: 'pointer',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '12px',
-                boxShadow: '0 4px 20px rgba(26, 109, 204, 0.3)',
-                transition: 'all 0.3s ease',
-                minHeight: '60px'
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.transform = 'translateY(-2px)';
-                e.currentTarget.style.boxShadow = '0 6px 30px rgba(26, 109, 204, 0.4)';
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.transform = 'translateY(0)';
-                e.currentTarget.style.boxShadow = '0 4px 20px rgba(26, 109, 204, 0.3)';
-              }}
+              onClick={() => setShowCustomization(!showCustomization)} 
+              className="customize-button-compact"
             >
-              <span style={{ fontSize: '24px' }}>✨</span>
-              <span>Customize</span>
+              ✨ Customize
             </button>
           </div>
         </div>
