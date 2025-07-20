@@ -19,7 +19,7 @@ This Monday.com app displays movie/TV titles organized by year, allowing executi
 - 📈 **Visual analytics**: Revenue, investment, ROI charts
 - 💾 **Auto-sync**: Changes save back to Monday.com boards
 
-## 📱 Current State (Last Updated: 2025-07-20 - Session 2)
+## 📱 Current State (Last Updated: 2025-07-20 - v1.0 Release)
 
 ### 🚨 Critical Context
 - **Initial Problem**: App was stuck on "missing column mappings" screen
@@ -72,12 +72,15 @@ This Monday.com app displays movie/TV titles organized by year, allowing executi
    - Styled data cells with soft backgrounds
    - Fixed z-index issues (panel at 9999)
 
-8. **Space & UX Improvements (Session 2)**
+8. **Space & UX Improvements (Session 2 - v1.0)**
    - Removed duplicate type tag at bottom of cards (saved vertical space)
-   - Moved edit hand emoji to top-right corner with blue background
+   - Moved edit hand emoji inside card (top-right, transparent)
    - Made year columns scroll independently with sticky headers
+   - Fixed drag-drop precision - cards drop exactly where indicated
    - Added drop zone visual feedback - cards move out of the way
-   - Golden drop indicator line animates above insertion point
+   - Golden drop indicator line animates above/below insertion point
+   - Success animation (golden glow) confirms drops
+   - Improved position tracking for accurate card placement
 
 ### 🔧 Touch Implementation Status
 - **Full Touch Support**: Native touch events for drag-and-drop
@@ -210,32 +213,55 @@ git push origin main
 - Build may need to run outside WSL
 - Limited to single board connection
 
+## 🚀 v1.0 Release Status
+
+**Released**: July 20, 2025
+**Status**: Production-ready for client testing
+**Commit**: ab691fe
+
+### What's Included
+- ✅ All touch optimizations for 85" displays
+- ✅ Fixed column mapping issue
+- ✅ Maximized card space (20-25 titles per column)
+- ✅ Precise drag-and-drop with visual feedback
+- ✅ Three theme modes (Regular, Dark, Night)
+- ✅ View presets (Executive, Financial, Production, Full)
+- ✅ Single-line responsive header
+- ✅ Independent column scrolling
+- ✅ Monday.com real-time sync
+
+### Known Stable Features
+- Drag titles between years with accurate positioning
+- Touch gestures work on iPad and large touchscreens
+- All data syncs back to Monday.com boards
+- Customization panel with column visibility toggles
+- Financial metrics and ROI calculations
+- Success animations confirm actions
+
 ## 📋 Next Session Pickup Points
 
 When continuing development:
 
-1. **Current Branch**: main (all features merged)
+1. **Current Branch**: main (v1.0 released)
 2. **Repository**: https://github.com/TCanDaMan/WB-Slate-Touchscreen-App  
-3. **Last Major Changes**: 
-   - Fixed column mapping bypass
-   - Maximized card space (20-25 titles per column)
-   - Single-line header layout
-   - Dark blue customization panel
-   - View presets working
-4. **Stable State**: All functionality working, optimized for touchscreens
+3. **Last Release**: v1.0 with all requested features
+4. **Stable State**: Production-ready, awaiting client feedback
 
-### User's Potential Next Steps (mentioned)
-- "we will make improvements later today"
-- May want timeline view re-enabled
-- May want export functionality enhanced
-- May want multi-select drag
+### Potential Future Enhancements
+- Timeline view (currently disabled)
+- Multi-select drag functionality
+- Enhanced export features
+- Batch operations
+- Undo/redo functionality
+- Keyboard shortcuts
+- Performance optimizations for 100+ titles
 
 ### Technical Debt
-- Re-enable timeline component (currently commented out)
+- Re-enable timeline component (vis-timeline commented out)
 - Add proper TypeScript types
-- Implement proper error boundaries
+- Implement error boundaries
 - Add unit tests
-- Consider performance optimizations for 100+ titles
+- Consider virtualization for very large datasets
 
 ## 🔍 Quick Reference
 
