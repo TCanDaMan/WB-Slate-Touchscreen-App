@@ -1862,33 +1862,56 @@ body.night-mode .theme-toggle-button:hover {
   box-shadow: 0 0 20px rgba(139, 92, 246, 0.3);
 }
 
-/* Touch-Optimized Tab Navigation */
+/* Sleek Modern Tab Navigation */
 .dashboard-tabs.touch-optimized {
   display: flex;
-  gap: 16px;
-  margin: 24px 0;
-  padding: 0 24px;
+  gap: 4px;
+  margin: 32px 0;
+  padding: 8px;
+  background: rgba(0, 0, 0, 0.05);
+  border-radius: 16px;
   overflow-x: auto;
   -webkit-overflow-scrolling: touch;
+  max-width: fit-content;
+  margin-left: auto;
+  margin-right: auto;
 }
 
 .dashboard-tabs.touch-optimized .tab {
   display: flex;
-  flex-direction: column;
   align-items: center;
   gap: 8px;
-  padding: 16px 32px;
-  min-width: 150px;
+  padding: 12px 24px;
+  min-height: 48px;
   white-space: nowrap;
+  background: transparent;
+  border: none;
+  border-radius: 12px;
+  color: var(--wbd-gray);
+  font-weight: 500;
+  transition: all 0.3s ease;
+  cursor: pointer;
+  position: relative;
+}
+
+.dashboard-tabs.touch-optimized .tab:hover {
+  color: var(--wbd-primary);
+  background: rgba(26, 109, 204, 0.05);
+}
+
+.dashboard-tabs.touch-optimized .tab.active {
+  background: var(--wbd-primary);
+  color: white;
+  box-shadow: 0 4px 12px rgba(26, 109, 204, 0.3);
 }
 
 .tab-icon {
-  font-size: 28px;
+  font-size: 20px;
 }
 
 .tab-label {
-  font-size: 16px;
-  font-weight: 600;
+  font-size: 15px;
+  font-weight: 500;
 }
 
 /* Customize Section */
@@ -2028,13 +2051,14 @@ body.night-mode .year-range-btn {
   right: -520px;
   width: 500px;
   height: 100vh;
-  background: rgba(255, 255, 255, 0.98);
+  background: linear-gradient(135deg, #1a2332 0%, #0f1823 100%);
   backdrop-filter: blur(20px);
-  box-shadow: -10px 0 40px rgba(0, 0, 0, 0.2);
+  box-shadow: -10px 0 40px rgba(0, 0, 0, 0.4);
   transition: right 0.4s cubic-bezier(0.4, 0, 0.2, 1);
   z-index: 9999 !important;
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
+  color: #ffffff;
 }
 
 .customization-panel.open {
@@ -2086,7 +2110,7 @@ body.night-mode .year-range-btn {
   font-size: 20px;
   font-weight: 600;
   margin-bottom: 24px;
-  color: var(--wbd-dark);
+  color: #ffffff;
 }
 
 /* Theme Grid */
@@ -2102,11 +2126,12 @@ body.night-mode .year-range-btn {
   align-items: center;
   gap: 12px;
   padding: 20px;
-  border: 2px solid transparent;
+  border: 2px solid rgba(255, 255, 255, 0.1);
   border-radius: 16px;
-  background: rgba(0, 0, 0, 0.02);
+  background: rgba(255, 255, 255, 0.05);
   cursor: pointer;
   transition: all 0.3s ease;
+  color: #ffffff;
 }
 
 .theme-card:hover {
@@ -2154,20 +2179,22 @@ body.night-mode .year-range-btn {
   justify-content: space-between;
   align-items: center;
   padding: 20px;
-  background: rgba(0, 0, 0, 0.02);
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: 12px;
   cursor: pointer;
-  transition: background 0.2s ease;
+  transition: all 0.2s ease;
 }
 
 .toggle-item:hover {
-  background: rgba(0, 0, 0, 0.04);
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.2);
 }
 
 .toggle-item span {
   font-size: 16px;
   font-weight: 500;
-  color: var(--wbd-dark);
+  color: #ffffff;
 }
 
 /* Toggle Switch */
@@ -2201,6 +2228,36 @@ body.night-mode .year-range-btn {
 
 .toggle-switch:checked::after {
   transform: translateX(28px);
+}
+
+/* Preset Grid */
+.preset-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+}
+
+.preset-button {
+  padding: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.05);
+  color: white;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 56px;
+}
+
+.preset-button:hover {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: var(--wbd-primary);
+  transform: translateY(-2px);
 }
 
 /* Action Buttons */

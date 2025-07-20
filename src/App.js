@@ -1922,7 +1922,6 @@ const WBDExecutiveSlateDashboard = () => {
         <button 
           className={activeTab === 'summary' ? 'tab active' : 'tab'} 
           onClick={() => setActiveTab('summary')}
-          style={{ minHeight: '60px', fontSize: '18px' }}
         >
           <span className="tab-icon">📊</span>
           <span className="tab-label">Summary</span>
@@ -1930,15 +1929,13 @@ const WBDExecutiveSlateDashboard = () => {
         <button 
           className={activeTab === 'financial' ? 'tab active' : 'tab'} 
           onClick={() => setActiveTab('financial')}
-          style={{ minHeight: '60px', fontSize: '18px' }}
         >
           <span className="tab-icon">💰</span>
-          <span className="tab-label">Financial Chart</span>
+          <span className="tab-label">Financial</span>
         </button>
         <button 
           className={activeTab === 'timeline' ? 'tab active' : 'tab'} 
           onClick={() => setActiveTab('timeline')}
-          style={{ minHeight: '60px', fontSize: '18px' }}
         >
           <span className="tab-icon">📅</span>
           <span className="tab-label">Timeline</span>
@@ -1946,10 +1943,9 @@ const WBDExecutiveSlateDashboard = () => {
         <button 
           className={activeTab === 'customize' ? 'tab active' : 'tab'} 
           onClick={() => setActiveTab('customize')}
-          style={{ minHeight: '60px', fontSize: '18px' }}
         >
           <span className="tab-icon">⚙️</span>
-          <span className="tab-label">Customize</span>
+          <span className="tab-label">Settings</span>
         </button>
       </div>
 
@@ -2626,6 +2622,68 @@ const WBDExecutiveSlateDashboard = () => {
                   className="toggle-switch"
                 />
               </label>
+            </div>
+          </div>
+
+          {/* Quick Presets */}
+          <div className="panel-section">
+            <h3>Quick Presets</h3>
+            <div className="preset-grid">
+              <button 
+                className="preset-button"
+                onClick={() => {
+                  // Sort by revenue
+                  const sorted = [...items].sort((a, b) => b.projectedRevenue - a.projectedRevenue);
+                  setItems(sorted);
+                  setShowCustomization(false);
+                }}
+              >
+                💰 By Revenue
+              </button>
+              <button 
+                className="preset-button"
+                onClick={() => {
+                  // Sort by release date
+                  const sorted = [...items].sort((a, b) => {
+                    const dateA = new Date(a.releaseDate || '2099-12-31');
+                    const dateB = new Date(b.releaseDate || '2099-12-31');
+                    return dateA - dateB;
+                  });
+                  setItems(sorted);
+                  setShowCustomization(false);
+                }}
+              >
+                📅 By Date
+              </button>
+              <button 
+                className="preset-button"
+                onClick={() => {
+                  // Sort by priority
+                  const priorityOrder = { 'High': 1, 'Medium': 2, 'Low': 3 };
+                  const sorted = [...items].sort((a, b) => 
+                    (priorityOrder[a.priority] || 4) - (priorityOrder[b.priority] || 4)
+                  );
+                  setItems(sorted);
+                  setShowCustomization(false);
+                }}
+              >
+                ⭐ By Priority
+              </button>
+              <button 
+                className="preset-button"
+                onClick={() => {
+                  // Sort by ROI
+                  const sorted = [...items].sort((a, b) => {
+                    const roiA = (a.projectedRevenue - a.productionBudget - a.marketingBudget) / (a.productionBudget + a.marketingBudget);
+                    const roiB = (b.projectedRevenue - b.productionBudget - b.marketingBudget) / (b.productionBudget + b.marketingBudget);
+                    return roiB - roiA;
+                  });
+                  setItems(sorted);
+                  setShowCustomization(false);
+                }}
+              >
+                📈 By ROI
+              </button>
             </div>
           </div>
 
