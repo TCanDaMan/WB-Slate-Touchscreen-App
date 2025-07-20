@@ -108,42 +108,6 @@ const WBD_THEME = {
   }
 };
 
-// Available column configurations
-const AVAILABLE_COLUMNS = {
-  productionBudget: { label: 'Production Budget', key: 'productionBudget', type: 'financial', default: true },
-  marketingBudget: { label: 'Marketing Budget', key: 'marketingBudget', type: 'financial', default: false },
-  projectedRevenue: { label: 'Projected Revenue', key: 'projectedRevenue', type: 'financial', default: true },
-  genre: { label: 'Genre', key: 'genre', type: 'detail', default: true },
-  director: { label: 'Director', key: 'director', type: 'detail', default: false },
-  status: { label: 'Status', key: 'status', type: 'detail', default: true },
-  type: { label: 'Content Type', key: 'type', type: 'detail', default: false },
-  productionCompany: { label: 'Production Company', key: 'productionCompany', type: 'detail', default: false },
-  distributionPartner: { label: 'Distribution Partner', key: 'distributionPartner', type: 'detail', default: false },
-  priority: { label: 'Priority', key: 'priority', type: 'meta', default: false },
-  riskLevel: { label: 'Risk Level', key: 'riskLevel', type: 'meta', default: false },
-  releaseDate: { label: 'Release Date', key: 'releaseDate', type: 'date', default: false },
-  startDate: { label: 'Start Date', key: 'startDate', type: 'date', default: false },
-  endDate: { label: 'End Date', key: 'endDate', type: 'date', default: false }
-};
-
-const COLUMN_PRESETS = {
-  executive: {
-    label: 'Executive Summary',
-    columns: ['productionBudget', 'projectedRevenue', 'genre', 'status']
-  },
-  financial: {
-    label: 'Financial Analysis', 
-    columns: ['productionBudget', 'marketingBudget', 'projectedRevenue', 'priority', 'riskLevel']
-  },
-  production: {
-    label: 'Production Planning',
-    columns: ['status', 'director', 'productionCompany', 'type', 'priority']
-  },
-  detailed: {
-    label: 'Complete View',
-    columns: Object.keys(AVAILABLE_COLUMNS)
-  }
-};
 
 // Custom Pie label for word wrapping
 const PieLabel = ({ name, percent, x, y, cx, cy, midAngle, outerRadius, index }) => {
@@ -198,7 +162,49 @@ function getTotalMetrics(yearTotals = {}, items = [], columnMapping = {}) {
 const REQUIRED_COLUMNS = [
   // No required columns - using flexible mapping
 ];
-console.log('REQUIRED_COLUMNS at definition:', REQUIRED_COLUMNS);
+
+// Available columns to display on cards
+const AVAILABLE_COLUMNS = {
+  title: { label: 'Title', type: 'text', default: true },
+  year: { label: 'Year', type: 'text', default: true },
+  genre: { label: 'Genre', type: 'text', default: true },
+  status: { label: 'Status', type: 'status', default: true },
+  releaseDate: { label: 'Release Date', type: 'date', default: true },
+  productionBudget: { label: 'Production Budget', type: 'currency', default: true },
+  marketingBudget: { label: 'Marketing Budget', type: 'currency', default: true },
+  projectedRevenue: { label: 'Projected Revenue', type: 'currency', default: true },
+  actualRevenue: { label: 'Actual Revenue', type: 'currency', default: false },
+  director: { label: 'Director', type: 'text', default: false },
+  studio: { label: 'Studio', type: 'text', default: false },
+  priority: { label: 'Priority', type: 'status', default: true },
+  riskLevel: { label: 'Risk Level', type: 'status', default: false },
+  notes: { label: 'Notes', type: 'text', default: false },
+  roi: { label: 'ROI %', type: 'percentage', default: true }
+};
+
+// View presets
+const COLUMN_PRESETS = {
+  executive: {
+    label: 'Executive View',
+    description: 'High-level overview for executives',
+    columns: ['title', 'year', 'status', 'projectedRevenue', 'roi']
+  },
+  financial: {
+    label: 'Financial View',
+    description: 'Focus on budgets and revenue',
+    columns: ['title', 'year', 'productionBudget', 'marketingBudget', 'projectedRevenue', 'actualRevenue', 'roi']
+  },
+  production: {
+    label: 'Production View',
+    description: 'Production details and status',
+    columns: ['title', 'year', 'genre', 'status', 'releaseDate', 'director', 'studio', 'priority']
+  },
+  full: {
+    label: 'Full View',
+    description: 'All available information',
+    columns: Object.keys(AVAILABLE_COLUMNS)
+  }
+};
 
 const WBDExecutiveSlateDashboard = () => {
   console.log('Widget loaded!');
@@ -2164,13 +2170,27 @@ const WBDExecutiveSlateDashboard = () => {
                                   const column = AVAILABLE_COLUMNS[columnKey];
                                   const value = item[columnKey];
                                   
-                                  if (!column || !value) return null;
+                                  // Skip null/undefined values and title (shown separately)
+                                  if (!column || value === null || value === undefined || columnKey === 'title') return null;
+                                  
+                                  // Format value based on type
+                                  let displayValue = value;
+                                  if (column.type === 'currency') {
+                                    displayValue = `$${value}M`;
+                                  } else if (column.type === 'percentage') {
+                                    const roi = item.projectedRevenue && (item.productionBudget + item.marketingBudget) 
+                                      ? ((item.projectedRevenue - item.productionBudget - item.marketingBudget) / (item.productionBudget + item.marketingBudget) * 100).toFixed(0)
+                                      : 0;
+                                    displayValue = `${roi}%`;
+                                  } else if (column.type === 'date' && value) {
+                                    displayValue = new Date(value).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+                                  }
                                   
                                   return (
                                     <div key={columnKey} className="detail">
-                                      <span className="detail-label">{column.label}</span>
+                                      <span className="detail-label">{column.label}:</span>
                                       <span className="detail-value">
-                                        {column.type === 'financial' ? formatCurrency(value) : value}
+                                        {displayValue}
                                       </span>
                                     </div>
                                   );
@@ -2552,9 +2572,9 @@ const WBDExecutiveSlateDashboard = () => {
         </div>
 
         <div className="panel-content">
-          {/* Theme Selection */}
+          {/* Row 1: Theme Selection and Display Options */}
           <div className="panel-section">
-            <h3>Theme Mode</h3>
+            <h3>🎨 Theme</h3>
             <div className="theme-grid">
               <button 
                 className={`theme-card ${themeMode === 'regular' ? 'active' : ''}`}
@@ -2564,7 +2584,7 @@ const WBDExecutiveSlateDashboard = () => {
                 }}
               >
                 <div className="theme-preview regular-preview"></div>
-                <span>☀️ Regular</span>
+                <span style={{ fontSize: '12px' }}>☀️ Regular</span>
               </button>
               <button 
                 className={`theme-card ${themeMode === 'dark' ? 'active' : ''}`}
@@ -2575,7 +2595,7 @@ const WBDExecutiveSlateDashboard = () => {
                 }}
               >
                 <div className="theme-preview dark-preview"></div>
-                <span>🌙 Dark</span>
+                <span style={{ fontSize: '12px' }}>🌙 Dark</span>
               </button>
               <button 
                 className={`theme-card ${themeMode === 'night' ? 'active' : ''}`}
@@ -2586,17 +2606,16 @@ const WBDExecutiveSlateDashboard = () => {
                 }}
               >
                 <div className="theme-preview night-preview"></div>
-                <span>🌌 Night</span>
+                <span style={{ fontSize: '12px' }}>🌌 Night</span>
               </button>
             </div>
           </div>
 
-          {/* Display Options */}
           <div className="panel-section">
-            <h3>Display Options</h3>
+            <h3>📊 Display</h3>
             <div className="toggle-list">
               <label className="toggle-item">
-                <span>Show Revenue Data</span>
+                <span>Revenue</span>
                 <input 
                   type="checkbox" 
                   checked={showRevenue} 
@@ -2605,7 +2624,7 @@ const WBDExecutiveSlateDashboard = () => {
                 />
               </label>
               <label className="toggle-item">
-                <span>Show Investment Data</span>
+                <span>Investment</span>
                 <input 
                   type="checkbox" 
                   checked={showInvestment} 
@@ -2614,7 +2633,7 @@ const WBDExecutiveSlateDashboard = () => {
                 />
               </label>
               <label className="toggle-item">
-                <span>Show Trend Indicators</span>
+                <span>Trends</span>
                 <input 
                   type="checkbox" 
                   checked={showTrends} 
@@ -2625,82 +2644,67 @@ const WBDExecutiveSlateDashboard = () => {
             </div>
           </div>
 
-          {/* Quick Presets */}
-          <div className="panel-section">
-            <h3>Quick Presets</h3>
+          {/* Row 2: View Presets (full width) */}
+          <div className="panel-section full-width">
+            <h3>👁️ View Presets</h3>
             <div className="preset-grid">
-              <button 
-                className="preset-button"
-                onClick={() => {
-                  // Sort by revenue
-                  const sorted = [...items].sort((a, b) => b.projectedRevenue - a.projectedRevenue);
-                  setItems(sorted);
-                  setShowCustomization(false);
-                }}
-              >
-                💰 By Revenue
-              </button>
-              <button 
-                className="preset-button"
-                onClick={() => {
-                  // Sort by release date
-                  const sorted = [...items].sort((a, b) => {
-                    const dateA = new Date(a.releaseDate || '2099-12-31');
-                    const dateB = new Date(b.releaseDate || '2099-12-31');
-                    return dateA - dateB;
-                  });
-                  setItems(sorted);
-                  setShowCustomization(false);
-                }}
-              >
-                📅 By Date
-              </button>
-              <button 
-                className="preset-button"
-                onClick={() => {
-                  // Sort by priority
-                  const priorityOrder = { 'High': 1, 'Medium': 2, 'Low': 3 };
-                  const sorted = [...items].sort((a, b) => 
-                    (priorityOrder[a.priority] || 4) - (priorityOrder[b.priority] || 4)
-                  );
-                  setItems(sorted);
-                  setShowCustomization(false);
-                }}
-              >
-                ⭐ By Priority
-              </button>
-              <button 
-                className="preset-button"
-                onClick={() => {
-                  // Sort by ROI
-                  const sorted = [...items].sort((a, b) => {
-                    const roiA = (a.projectedRevenue - a.productionBudget - a.marketingBudget) / (a.productionBudget + a.marketingBudget);
-                    const roiB = (b.projectedRevenue - b.productionBudget - b.marketingBudget) / (b.productionBudget + b.marketingBudget);
-                    return roiB - roiA;
-                  });
-                  setItems(sorted);
-                  setShowCustomization(false);
-                }}
-              >
-                📈 By ROI
-              </button>
+              {Object.entries(COLUMN_PRESETS).map(([key, preset]) => (
+                <button 
+                  key={key}
+                  className={`preset-button ${activePreset === key ? 'active' : ''}`}
+                  onClick={() => handlePresetChange(key)}
+                >
+                  <span style={{ fontSize: '20px' }}>
+                    {key === 'executive' ? '👔' : 
+                     key === 'financial' ? '💰' : 
+                     key === 'production' ? '🎬' : '📊'}
+                  </span>
+                  <div>
+                    <div style={{ fontWeight: '600', fontSize: '14px' }}>{preset.label}</div>
+                    <div style={{ fontSize: '11px', opacity: 0.7 }}>{preset.description}</div>
+                  </div>
+                </button>
+              ))}
             </div>
           </div>
 
-          {/* Quick Actions */}
-          <div className="panel-section">
-            <h3>Quick Actions</h3>
+          {/* Row 3: Column Visibility (full width, scrollable) */}
+          <div className="panel-section full-width" style={{ gridRow: '3' }}>
+            <h3>🔧 Column Visibility</h3>
+            <div className="column-toggle-list">
+              {Object.entries(AVAILABLE_COLUMNS).map(([key, column]) => (
+                <label key={key} className="toggle-item">
+                  <span>{column.label}</span>
+                  <input 
+                    type="checkbox" 
+                    checked={visibleColumns.includes(key)} 
+                    onChange={() => handleColumnToggle(key)}
+                    className="toggle-switch"
+                  />
+                </label>
+              ))}
+            </div>
+          </div>
+
+          {/* Row 4: Quick Actions (full width) */}
+          <div className="panel-section full-width">
+            <h3>⚡ Quick Actions</h3>
             <div className="action-buttons">
               <button 
                 className="action-button"
                 onClick={() => {
                   setFilterStatus('All');
                   setFilterGenre('All');
+                  setFilterYear('All');
                   setActiveTab('summary');
                   setShowCustomization(false);
+                  monday.execute('notice', {
+                    message: 'Filters reset',
+                    type: 'success'
+                  });
                 }}
               >
-                🔄 Reset Filters
+                🔄 Reset All
               </button>
               <button 
                 className="action-button"
@@ -2709,7 +2713,7 @@ const WBDExecutiveSlateDashboard = () => {
                   setShowCustomization(false);
                 }}
               >
-                📊 Export Report
+                📊 Export
               </button>
             </div>
           </div>
