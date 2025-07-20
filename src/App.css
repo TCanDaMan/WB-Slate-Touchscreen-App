@@ -237,11 +237,20 @@ body {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 32px;
+  margin-bottom: 0;
   position: relative;
   z-index: 1;
   flex-wrap: wrap;
   gap: 20px;
+}
+
+.wbd-header-row2 {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 16px;
+  flex-wrap: wrap;
+  gap: 16px;
 }
 
 .wbd-logo-area {
@@ -740,12 +749,12 @@ body {
 }
 
 .title-card .title-name {
-  font-size: 0.9rem;
-  font-weight: 600;
+  font-size: 1.1rem;
+  font-weight: 700;
   color: #ffd600;
-  margin-bottom: 4px;
-  letter-spacing: -0.01em;
-  line-height: 1.1;
+  margin-bottom: 6px;
+  letter-spacing: -0.02em;
+  line-height: 1.15;
 }
 
 .title-details {
@@ -1903,6 +1912,17 @@ body.night-mode .theme-toggle-button:hover {
   max-width: fit-content;
   margin-left: auto;
   margin-right: auto;
+}
+
+/* Tabs when in header */
+.dashboard-tabs.header-tabs {
+  margin: 0;
+  padding: 0;
+  background: none;
+  width: 100%;
+  justify-content: center;
+  border-top: 1px solid rgba(212, 175, 55, 0.1);
+  padding-top: 16px;
 }
 
 .dashboard-tabs.touch-optimized .tab {

@@ -1841,7 +1841,7 @@ const WBDExecutiveSlateDashboard = () => {
         </div>
       )}
       {/* Executive Header with Settings */}
-      <Box className="card" style={{ marginBottom: 32, padding: 32 }}>
+      <Box className="card" style={{ marginBottom: 20, padding: 24 }}>
         <div className="wbd-header">
           <div className="wbd-logo-area">
             <div className="wbd-shield">WB</div>
@@ -1850,6 +1850,41 @@ const WBDExecutiveSlateDashboard = () => {
               <p className="dashboard-subtitle">Strategic content portfolio management • 2025-2029</p>
             </div>
           </div>
+        </div>
+        
+        {/* Touch-friendly Tab Navigation - Moved to header */}
+        <div className="dashboard-tabs touch-optimized header-tabs" style={{ marginTop: '20px', marginBottom: '0' }}>
+          <button 
+            className={activeTab === 'summary' ? 'tab active' : 'tab'} 
+            onClick={() => setActiveTab('summary')}
+          >
+            <span className="tab-icon">📊</span>
+            <span className="tab-label">Summary</span>
+          </button>
+          <button 
+            className={activeTab === 'financial' ? 'tab active' : 'tab'} 
+            onClick={() => setActiveTab('financial')}
+          >
+            <span className="tab-icon">💰</span>
+            <span className="tab-label">Financial</span>
+          </button>
+          <button 
+            className={activeTab === 'timeline' ? 'tab active' : 'tab'} 
+            onClick={() => setActiveTab('timeline')}
+          >
+            <span className="tab-icon">📅</span>
+            <span className="tab-label">Timeline</span>
+          </button>
+          <button 
+            className={activeTab === 'customize' ? 'tab active' : 'tab'} 
+            onClick={() => setActiveTab('customize')}
+          >
+            <span className="tab-icon">⚙️</span>
+            <span className="tab-label">Settings</span>
+          </button>
+        </div>
+        
+        <div className="wbd-header-row2">
           <div className="header-controls">
             <div className="executive-metrics">
               <div className="card badge financial">
@@ -1921,39 +1956,6 @@ const WBDExecutiveSlateDashboard = () => {
           </div>
         </div>
       </Box>
-
-
-      {/* Touch-friendly Tab Navigation */}
-      <div className="dashboard-tabs touch-optimized">
-        <button 
-          className={activeTab === 'summary' ? 'tab active' : 'tab'} 
-          onClick={() => setActiveTab('summary')}
-        >
-          <span className="tab-icon">📊</span>
-          <span className="tab-label">Summary</span>
-        </button>
-        <button 
-          className={activeTab === 'financial' ? 'tab active' : 'tab'} 
-          onClick={() => setActiveTab('financial')}
-        >
-          <span className="tab-icon">💰</span>
-          <span className="tab-label">Financial</span>
-        </button>
-        <button 
-          className={activeTab === 'timeline' ? 'tab active' : 'tab'} 
-          onClick={() => setActiveTab('timeline')}
-        >
-          <span className="tab-icon">📅</span>
-          <span className="tab-label">Timeline</span>
-        </button>
-        <button 
-          className={activeTab === 'customize' ? 'tab active' : 'tab'} 
-          onClick={() => setActiveTab('customize')}
-        >
-          <span className="tab-icon">⚙️</span>
-          <span className="tab-label">Settings</span>
-        </button>
-      </div>
 
       {/* Tab Content */}
       {activeTab === 'summary' && (
