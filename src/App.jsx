@@ -1,6 +1,7 @@
 // src/App.js - Enhanced WBD Executive Slate Dashboard
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+import React, { useState, useEffect, useCallback, useRef, memo, useMemo, useTransition, useDeferredValue } from 'react';
 import mondaySdk from 'monday-sdk-js';
+import { format } from 'date-fns';
 import {
   ResponsiveContainer,
   ComposedChart,
@@ -206,6 +207,356 @@ const COLUMN_PRESETS = {
   }
 };
 
+// Memoized Chart component for better performance
+const MemoizedChart = memo(({ data, showRevenue, showInvestment, showTrends }) => {
+  return (
+    <ResponsiveContainer width="100%" height={300}>
+      <ComposedChart data={data} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
+        <CartesianGrid strokeDasharray="3 3" stroke={WBD_THEME.colors.grayLight} opacity={0.3} />
+        <XAxis 
+          dataKey="year" 
+          stroke={WBD_THEME.colors.white}
+          fontSize={14}
+          fontFamily="Inter, sans-serif"
+        />
+        <YAxis 
+          yAxisId="financial"
+          stroke={WBD_THEME.colors.white}
+          fontSize={12}
+          fontFamily="Inter, sans-serif"
+        />
+        <YAxis 
+          yAxisId="roi"
+          orientation="right"
+          stroke={WBD_THEME.colors.success}
+          fontSize={12}
+          fontFamily="Inter, sans-serif"
+        />
+        <Tooltip 
+          contentStyle={{
+            backgroundColor: WBD_THEME.colors.dark,
+            border: `1px solid ${WBD_THEME.colors.gold}`,
+            borderRadius: '8px',
+            color: WBD_THEME.colors.white,
+            fontFamily: "Inter, sans-serif"
+          }}
+          formatter={(value, name, props) => {
+            if (name === 'roi') return [`${value.toFixed(1)}%`, 'ROI'];
+            if (name === 'revenue' || name === 'investment') {
+              return [`$${value}M`, name.charAt(0).toUpperCase() + name.slice(1)];
+            }
+            return [value, name];
+          }}
+        />
+        {showRevenue && (
+          <Bar yAxisId="financial" dataKey="revenue" fill={WBD_THEME.colors.primary} barSize={40} />
+        )}
+        {showInvestment && (
+          <Bar yAxisId="financial" dataKey="investment" fill={WBD_THEME.colors.gold} barSize={40} />
+        )}
+        <Line 
+          yAxisId="roi" 
+          type="monotone" 
+          dataKey="roi" 
+          stroke={WBD_THEME.colors.success} 
+          strokeWidth={3}
+          dot={{ fill: WBD_THEME.colors.success, r: 5 }}
+        />
+        {showTrends && data.some(d => d.ma_revenue) && (
+          <Line 
+            yAxisId="financial" 
+            type="monotone" 
+            dataKey="ma_revenue" 
+            stroke="#8e44ad" 
+            strokeWidth={2} 
+            strokeDasharray="5 5"
+            dot={false}
+          />
+        )}
+      </ComposedChart>
+    </ResponsiveContainer>
+  );
+}, (prevProps, nextProps) => {
+  return (
+    JSON.stringify(prevProps.data) === JSON.stringify(nextProps.data) &&
+    prevProps.showRevenue === nextProps.showRevenue &&
+    prevProps.showInvestment === nextProps.showInvestment &&
+    prevProps.showTrends === nextProps.showTrends
+  );
+});
+
+// Memoized TitleCard component for better performance
+const TitleCard = memo(({ 
+  item, 
+  isEditing, 
+  editValues, 
+  visibleColumns, 
+  onDragStart, 
+  onDragEnd, 
+  onEditStart, 
+  onEditSave, 
+  onEditCancel, 
+  onEditChange, 
+  onOpenCard,
+  isDragging 
+}) => {
+  const handleTouchStart = useCallback((e) => {
+    if (isEditing) return;
+    const touch = e.touches[0];
+    const element = e.currentTarget;
+    const rect = element.getBoundingClientRect();
+    
+    // Store initial touch info
+    element.dataset.touchStartX = touch.clientX;
+    element.dataset.touchStartY = touch.clientY;
+    element.dataset.offsetX = touch.clientX - rect.left;
+    element.dataset.offsetY = touch.clientY - rect.top;
+    element.dataset.itemId = item.id;
+    
+    // Clone for dragging
+    const clone = element.cloneNode(true);
+    clone.id = 'drag-clone';
+    clone.style.position = 'fixed';
+    clone.style.left = `${rect.left}px`;
+    clone.style.top = `${rect.top}px`;
+    clone.style.width = `${rect.width}px`;
+    clone.style.height = `${rect.height}px`;
+    clone.style.zIndex = '99999';
+    clone.style.pointerEvents = 'none';
+    clone.style.opacity = '0.8';
+    clone.style.transform = 'scale(0.95)';
+    clone.classList.add('dragging-clone');
+    document.body.appendChild(clone);
+    
+    onDragStart(e, item.id);
+    element.style.opacity = '0.3';
+  }, [isEditing, item.id, onDragStart]);
+
+  const handleTouchMove = useCallback((e) => {
+    if (isEditing) return;
+    e.preventDefault();
+    const touch = e.touches[0];
+    const clone = document.getElementById('drag-clone');
+    if (clone) {
+      const offsetX = parseFloat(e.currentTarget.dataset.offsetX);
+      const offsetY = parseFloat(e.currentTarget.dataset.offsetY);
+      clone.style.left = `${touch.clientX - offsetX}px`;
+      clone.style.top = `${touch.clientY - offsetY}px`;
+      
+      // Check for drop target
+      clone.style.pointerEvents = 'none';
+      const elementBelow = document.elementFromPoint(touch.clientX, touch.clientY);
+      const yearColumn = elementBelow?.closest('.year-column');
+      const cardBelow = elementBelow?.closest('.title-card');
+      
+      // Remove previous hover states
+      document.querySelectorAll('.year-column').forEach(col => col.classList.remove('drag-over'));
+      document.querySelectorAll('.title-card').forEach(card => card.classList.remove('drop-indicator', 'drop-indicator-below'));
+      
+      if (yearColumn) {
+        yearColumn.classList.add('drag-over');
+        
+        // Get touch position and find cards in the year column
+        const titlesList = yearColumn.querySelector('.titles-list');
+        const cards = Array.from(titlesList.querySelectorAll('.title-card:not(.dragging)'));
+        
+        if (cards.length > 0) {
+          let targetCard = null;
+          let insertBelow = false;
+          
+          for (let i = 0; i < cards.length; i++) {
+            const card = cards[i];
+            const rect = card.getBoundingClientRect();
+            const cardMiddle = rect.top + rect.height / 2;
+            
+            if (touch.clientY < cardMiddle) {
+              targetCard = card;
+              break;
+            } else if (i === cards.length - 1) {
+              targetCard = card;
+              insertBelow = true;
+            }
+          }
+          
+          if (targetCard && targetCard !== e.currentTarget) {
+            targetCard.classList.add(insertBelow ? 'drop-indicator-below' : 'drop-indicator');
+          }
+        }
+      }
+    }
+  }, [isEditing]);
+
+  const handleTouchEnd = useCallback((e) => {
+    if (isEditing) return;
+    const clone = document.getElementById('drag-clone');
+    if (clone) {
+      const touch = e.changedTouches[0];
+      clone.style.pointerEvents = 'none';
+      const elementBelow = document.elementFromPoint(touch.clientX, touch.clientY);
+      const yearColumn = elementBelow?.closest('.year-column');
+      
+      if (yearColumn) {
+        const year = yearColumn.getAttribute('data-year');
+        if (year) {
+          // Find the target position based on which card has the drop indicator
+          const targetCard = yearColumn.querySelector('.title-card.drop-indicator, .title-card.drop-indicator-below');
+          let targetPosition = null;
+          let insertAfter = false;
+          
+          if (targetCard) {
+            targetPosition = targetCard.getAttribute('data-item-id');
+            insertAfter = targetCard.classList.contains('drop-indicator-below');
+          }
+          
+          onDragEnd(e, item.id, year, targetPosition, insertAfter);
+        }
+      }
+      
+      clone.remove();
+      document.querySelectorAll('.year-column').forEach(col => col.classList.remove('drag-over'));
+      document.querySelectorAll('.title-card').forEach(card => card.classList.remove('drop-indicator', 'drop-indicator-below'));
+      e.currentTarget.style.opacity = '1';
+    }
+  }, [isEditing, item.id, onDragEnd]);
+
+  return (
+    <div
+      key={item.id}
+      data-item-id={item.id}
+      className={`title-card ${isDragging ? 'dragging' : ''} ${isEditing ? 'editing' : ''}`}
+      draggable={!isEditing}
+      onDragStart={(e) => onDragStart(e, item.id)}
+      onDragEnd={onDragEnd}
+      onClick={() => !isEditing && onOpenCard(item.id)}
+      onTouchStart={handleTouchStart}
+      onTouchMove={handleTouchMove}
+      onTouchEnd={handleTouchEnd}
+      style={{ 
+        cursor: isEditing ? 'default' : 'grab',
+        position: 'relative'
+      }}
+    >
+      <div className="title-name">{item.name}</div>
+      
+      {isEditing ? (
+        // Edit Mode
+        <div className="edit-mode">
+          <div className="edit-fields">
+            <div className="edit-field">
+              <label>Production Budget ($M)</label>
+              <input
+                type="number"
+                value={editValues.productionBudget || 0}
+                onChange={(e) => onEditChange('productionBudget', e.target.value)}
+                className="edit-input"
+              />
+            </div>
+            <div className="edit-field">
+              <label>Marketing Budget ($M)</label>
+              <input
+                type="number"
+                value={editValues.marketingBudget || 0}
+                onChange={(e) => onEditChange('marketingBudget', e.target.value)}
+                className="edit-input"
+              />
+            </div>
+            <div className="edit-field">
+              <label>Projected Revenue ($M)</label>
+              <input
+                type="number"
+                value={editValues.projectedRevenue || 0}
+                onChange={(e) => onEditChange('projectedRevenue', e.target.value)}
+                className="edit-input"
+              />
+            </div>
+            <div className="edit-field">
+              <label>Status</label>
+              <select
+                value={editValues.status || ''}
+                onChange={(e) => onEditChange('status', e.target.value)}
+                className="edit-select"
+              >
+                <option value="Development">Development</option>
+                <option value="Pre-Production">Pre-Production</option>
+                <option value="Production">Production</option>
+                <option value="Post-Production">Post-Production</option>
+                <option value="Completed">Completed</option>
+              </select>
+            </div>
+          </div>
+          <div className="edit-actions">
+            <button onClick={() => onEditSave(item.id)} className="save-button">
+              💾 Save
+            </button>
+            <button onClick={onEditCancel} className="cancel-button">
+              ❌ Cancel
+            </button>
+          </div>
+        </div>
+      ) : (
+        // View Mode
+        <>
+          <button 
+            onClick={(e) => onEditStart(item, e)}
+            className="edit-button edit-button-top"
+            title="Edit item"
+          >
+            🫳
+          </button>
+          
+          <div className="badges-row" style={{ marginBottom: 8 }}>
+            {item.status && <span className="badge status">{item.status}</span>}
+            {item.type && <span className="badge type">{item.type}</span>}
+            {item.priority && <span className="badge meta">{item.priority}</span>}
+            {item.riskLevel && <span className="badge meta">{item.riskLevel}</span>}
+          </div>
+          
+          <div className="title-details">
+            {visibleColumns.map(columnKey => {
+              const column = AVAILABLE_COLUMNS[columnKey];
+              const value = item[columnKey];
+              
+              // Skip null/undefined values and title (shown separately)
+              if (!column || value === null || value === undefined || columnKey === 'title') return null;
+              
+              // Format value based on type
+              let displayValue = value;
+              if (column.type === 'currency') {
+                displayValue = `$${value}M`;
+              } else if (column.type === 'percentage') {
+                const roi = item.projectedRevenue && (item.productionBudget + item.marketingBudget) 
+                  ? ((item.projectedRevenue - item.productionBudget - item.marketingBudget) / (item.productionBudget + item.marketingBudget) * 100).toFixed(0)
+                  : 0;
+                displayValue = `${roi}%`;
+              } else if (column.type === 'date' && value) {
+                displayValue = format(new Date(value), 'MMM d, yyyy');
+              }
+              
+              return (
+                <div key={columnKey} className="detail">
+                  <span className="detail-label">{column.label}:</span>
+                  <span className="detail-value">
+                    {displayValue}
+                  </span>
+                </div>
+              );
+            })}
+          </div>
+        </>
+      )}
+    </div>
+  );
+}, (prevProps, nextProps) => {
+  // Custom comparison function for memo
+  return (
+    prevProps.item.id === nextProps.item.id &&
+    prevProps.isEditing === nextProps.isEditing &&
+    prevProps.isDragging === nextProps.isDragging &&
+    JSON.stringify(prevProps.editValues) === JSON.stringify(nextProps.editValues) &&
+    JSON.stringify(prevProps.visibleColumns) === JSON.stringify(nextProps.visibleColumns)
+  );
+});
+
 const WBDExecutiveSlateDashboard = () => {
   console.log('Widget loaded!');
   const [items, setItems] = useState([]);
@@ -224,6 +575,7 @@ const WBDExecutiveSlateDashboard = () => {
   const [filterYear, setFilterYear] = useState('All');
   const [filterGenre, setFilterGenre] = useState('All');
   const [filterStatus, setFilterStatus] = useState('All');
+  const [isPending, startTransition] = useTransition();
   const [editingItem, setEditingItem] = useState(null);
   const [editValues, setEditValues] = useState({});
   const [themeMode, setThemeMode] = useState('regular'); // regular, dark, night
@@ -1569,17 +1921,19 @@ const WBDExecutiveSlateDashboard = () => {
     console.error('Summary error:', err);
   }
 
-  // Get unique values for filters
-  const uniqueYears = ['All', ...Array.from(new Set(items.map(item => item.year)).values())];
-  const uniqueGenres = ['All', ...Array.from(new Set(items.map(item => item.genre).filter(Boolean)).values())];
-  const uniqueStatuses = ['All', ...Array.from(new Set(items.map(item => item.status).filter(Boolean)).values())];
+  // Get unique values for filters with memoization
+  const uniqueYears = useMemo(() => ['All', ...Array.from(new Set(items.map(item => item.year)).values())], [items]);
+  const uniqueGenres = useMemo(() => ['All', ...Array.from(new Set(items.map(item => item.genre).filter(Boolean)).values())], [items]);
+  const uniqueStatuses = useMemo(() => ['All', ...Array.from(new Set(items.map(item => item.status).filter(Boolean)).values())], [items]);
 
-  // Filter items based on selected filters
-  const filteredItems = items.filter(item => {
-    return (filterYear === 'All' || item.year === filterYear) &&
-           (filterGenre === 'All' || item.genre === filterGenre) &&
-           (filterStatus === 'All' || item.status === filterStatus);
-  });
+  // Filter items based on selected filters with memoization
+  const filteredItems = useMemo(() => {
+    return items.filter(item => {
+      return (filterYear === 'All' || item.year === filterYear) &&
+             (filterGenre === 'All' || item.genre === filterGenre) &&
+             (filterStatus === 'All' || item.status === filterStatus);
+    });
+  }, [items, filterYear, filterGenre, filterStatus]);
 
   const handleOpenItemCard = (itemId) => {
     if (!itemId || itemId.startsWith('sample')) return;
@@ -1906,11 +2260,14 @@ const WBDExecutiveSlateDashboard = () => {
     );
   }
 
-  // Organize items by year while preserving order
-  const itemsByYear = {};
-  YEARS.forEach(year => {
-    itemsByYear[year] = filteredItems.filter(item => item.year === year);
-  });
+  // Organize items by year while preserving order with memoization
+  const itemsByYear = useMemo(() => {
+    const grouped = {};
+    YEARS.forEach(year => {
+      grouped[year] = filteredItems.filter(item => item.year === year);
+    });
+    return grouped;
+  }, [filteredItems]);
 
   return (
     <div className="wbd-dashboard">
@@ -1997,13 +2354,28 @@ const WBDExecutiveSlateDashboard = () => {
           
           {/* Filters */}
           <div className="dashboard-filters-inline">
-            <select value={filterYear} onChange={(e) => setFilterYear(e.target.value)} className="monday-style-dropdown compact">
+            <select 
+              value={filterYear} 
+              onChange={(e) => startTransition(() => setFilterYear(e.target.value))} 
+              className="monday-style-dropdown compact"
+              disabled={isPending}
+            >
               {uniqueYears.map(year => <option key={year} value={year}>{year}</option>)}
             </select>
-            <select value={filterGenre} onChange={(e) => setFilterGenre(e.target.value)} className="monday-style-dropdown compact">
+            <select 
+              value={filterGenre} 
+              onChange={(e) => startTransition(() => setFilterGenre(e.target.value))} 
+              className="monday-style-dropdown compact"
+              disabled={isPending}
+            >
               {uniqueGenres.map(genre => <option key={genre} value={genre}>{genre}</option>)}
             </select>
-            <select value={filterStatus} onChange={(e) => setFilterStatus(e.target.value)} className="monday-style-dropdown compact">
+            <select 
+              value={filterStatus} 
+              onChange={(e) => startTransition(() => setFilterStatus(e.target.value))} 
+              className="monday-style-dropdown compact"
+              disabled={isPending}
+            >
               {uniqueStatuses.map(status => <option key={status} value={status}>{status}</option>)}
             </select>
           </div>
@@ -2081,246 +2453,26 @@ const WBDExecutiveSlateDashboard = () => {
 
                     <div className="titles-list">
                       {(itemsByYear[year] || []).map(item => (
-                        <div
+                        <TitleCard
                           key={item.id}
-                          data-item-id={item.id}
-                          className={`title-card ${draggedItem === item.id ? 'dragging' : ''} ${editingItem === item.id ? 'editing' : ''}`}
-                          draggable={editingItem !== item.id}
-                          onDragStart={(e) => handleDragStart(e, item.id)}
-                          onDragEnd={handleDragEnd}
-                          onClick={() => editingItem !== item.id && handleOpenItemCard(item.id)}
-                          onTouchStart={(e) => {
-                            if (editingItem === item.id) return;
-                            const touch = e.touches[0];
-                            const element = e.currentTarget;
-                            const rect = element.getBoundingClientRect();
-                            
-                            // Store initial touch info
-                            element.dataset.touchStartX = touch.clientX;
-                            element.dataset.touchStartY = touch.clientY;
-                            element.dataset.offsetX = touch.clientX - rect.left;
-                            element.dataset.offsetY = touch.clientY - rect.top;
-                            element.dataset.itemId = item.id;
-                            
-                            // Clone for dragging
-                            const clone = element.cloneNode(true);
-                            clone.id = 'drag-clone';
-                            clone.style.position = 'fixed';
-                            clone.style.left = `${rect.left}px`;
-                            clone.style.top = `${rect.top}px`;
-                            clone.style.width = `${rect.width}px`;
-                            clone.style.height = `${rect.height}px`;
-                            clone.style.zIndex = '99999';
-                            clone.style.pointerEvents = 'none';
-                            clone.style.opacity = '0.8';
-                            clone.style.transform = 'scale(0.95)';
-                            clone.classList.add('dragging-clone');
-                            document.body.appendChild(clone);
-                            
-                            setDraggedItem(item.id);
-                            element.style.opacity = '0.3';
-                          }}
-                          onTouchMove={(e) => {
-                            if (editingItem === item.id) return;
-                            e.preventDefault();
-                            const touch = e.touches[0];
-                            const clone = document.getElementById('drag-clone');
-                            if (clone) {
-                              const offsetX = parseFloat(e.currentTarget.dataset.offsetX);
-                              const offsetY = parseFloat(e.currentTarget.dataset.offsetY);
-                              clone.style.left = `${touch.clientX - offsetX}px`;
-                              clone.style.top = `${touch.clientY - offsetY}px`;
-                              
-                              // Check for drop target
-                              clone.style.pointerEvents = 'none';
-                              const elementBelow = document.elementFromPoint(touch.clientX, touch.clientY);
-                              const yearColumn = elementBelow?.closest('.year-column');
-                              const cardBelow = elementBelow?.closest('.title-card');
-                              
-                              // Remove previous hover states
-                              document.querySelectorAll('.year-column').forEach(col => col.classList.remove('drag-over'));
-                              document.querySelectorAll('.title-card').forEach(card => card.classList.remove('drop-indicator', 'drop-indicator-below'));
-                              
-                              if (yearColumn) {
-                                yearColumn.classList.add('drag-over');
-                                
-                                // Get touch position and find cards in the year column
-                                const titlesList = yearColumn.querySelector('.titles-list');
-                                const cards = Array.from(titlesList.querySelectorAll('.title-card:not(.dragging)'));
-                                
-                                if (cards.length > 0) {
-                                  let targetCard = null;
-                                  let insertBelow = false;
-                                  
-                                  for (let i = 0; i < cards.length; i++) {
-                                    const card = cards[i];
-                                    const rect = card.getBoundingClientRect();
-                                    const cardMiddle = rect.top + rect.height / 2;
-                                    
-                                    if (touch.clientY < cardMiddle) {
-                                      targetCard = card;
-                                      break;
-                                    } else if (i === cards.length - 1) {
-                                      targetCard = card;
-                                      insertBelow = true;
-                                    }
-                                  }
-                                  
-                                  if (targetCard && targetCard !== e.currentTarget) {
-                                    targetCard.classList.add(insertBelow ? 'drop-indicator-below' : 'drop-indicator');
-                                  }
-                                }
-                              }
+                          item={item}
+                          isEditing={editingItem === item.id}
+                          editValues={editValues}
+                          visibleColumns={visibleColumns}
+                          onDragStart={handleDragStart}
+                          onDragEnd={(e, itemId, targetYear, targetPosition, insertAfter) => {
+                            if (targetYear) {
+                              handleTitleMove(itemId, targetYear, targetPosition, insertAfter);
                             }
+                            handleDragEnd(e);
                           }}
-                          onTouchEnd={(e) => {
-                            if (editingItem === item.id) return;
-                            const clone = document.getElementById('drag-clone');
-                            if (clone) {
-                              const touch = e.changedTouches[0];
-                              clone.style.pointerEvents = 'none';
-                              const elementBelow = document.elementFromPoint(touch.clientX, touch.clientY);
-                              const yearColumn = elementBelow?.closest('.year-column');
-                              
-                              if (yearColumn) {
-                                const year = yearColumn.getAttribute('data-year');
-                                if (year) {
-                                  // Find the target position based on which card has the drop indicator
-                                  const targetCard = yearColumn.querySelector('.title-card.drop-indicator, .title-card.drop-indicator-below');
-                                  let targetPosition = null;
-                                  let insertAfter = false;
-                                  
-                                  if (targetCard) {
-                                    targetPosition = targetCard.getAttribute('data-item-id');
-                                    insertAfter = targetCard.classList.contains('drop-indicator-below');
-                                  }
-                                  
-                                  handleTitleMove(item.id, year, targetPosition, insertAfter);
-                                }
-                              }
-                              
-                              clone.remove();
-                              document.querySelectorAll('.year-column').forEach(col => col.classList.remove('drag-over'));
-                              document.querySelectorAll('.title-card').forEach(card => card.classList.remove('drop-indicator', 'drop-indicator-below'));
-                              e.currentTarget.style.opacity = '1';
-                              setDraggedItem(null);
-                            }
-                          }}
-                          style={{ 
-                            cursor: editingItem === item.id ? 'default' : 'grab',
-                            position: 'relative'
-                          }}
-                        >
-                          <div className="title-name">{item.name}</div>
-                          
-                          {editingItem === item.id ? (
-                            // Edit Mode
-                            <div className="edit-mode">
-                              <div className="edit-fields">
-                                <div className="edit-field">
-                                  <label>Production Budget ($M)</label>
-                                  <input
-                                    type="number"
-                                    value={editValues.productionBudget || 0}
-                                    onChange={(e) => handleEditChange('productionBudget', e.target.value)}
-                                    className="edit-input"
-                                  />
-                                </div>
-                                <div className="edit-field">
-                                  <label>Marketing Budget ($M)</label>
-                                  <input
-                                    type="number"
-                                    value={editValues.marketingBudget || 0}
-                                    onChange={(e) => handleEditChange('marketingBudget', e.target.value)}
-                                    className="edit-input"
-                                  />
-                                </div>
-                                <div className="edit-field">
-                                  <label>Projected Revenue ($M)</label>
-                                  <input
-                                    type="number"
-                                    value={editValues.projectedRevenue || 0}
-                                    onChange={(e) => handleEditChange('projectedRevenue', e.target.value)}
-                                    className="edit-input"
-                                  />
-                                </div>
-                                <div className="edit-field">
-                                  <label>Status</label>
-                                  <select
-                                    value={editValues.status || ''}
-                                    onChange={(e) => handleEditChange('status', e.target.value)}
-                                    className="edit-select"
-                                  >
-                                    <option value="Development">Development</option>
-                                    <option value="Pre-Production">Pre-Production</option>
-                                    <option value="Production">Production</option>
-                                    <option value="Post-Production">Post-Production</option>
-                                    <option value="Completed">Completed</option>
-                                  </select>
-                                </div>
-                              </div>
-                              <div className="edit-actions">
-                                <button onClick={() => handleEditSave(item.id)} className="save-button">
-                                  💾 Save
-                                </button>
-                                <button onClick={handleEditCancel} className="cancel-button">
-                                  ❌ Cancel
-                                </button>
-                              </div>
-                            </div>
-                          ) : (
-                            // View Mode
-                            <>
-                              <button 
-                                onClick={(e) => handleEditStart(item, e)}
-                                className="edit-button edit-button-top"
-                                title="Edit item"
-                              >
-                                🫳
-                              </button>
-                              
-                              <div className="badges-row" style={{ marginBottom: 8 }}>
-                                {item.status && <span className="badge status">{item.status}</span>}
-                                {item.type && <span className="badge type">{item.type}</span>}
-                                {item.priority && <span className="badge meta">{item.priority}</span>}
-                                {item.riskLevel && <span className="badge meta">{item.riskLevel}</span>}
-                                {/* Add more badges as needed */}
-                              </div>
-                              
-                              <div className="title-details">
-                                {visibleColumns.map(columnKey => {
-                                  const column = AVAILABLE_COLUMNS[columnKey];
-                                  const value = item[columnKey];
-                                  
-                                  // Skip null/undefined values and title (shown separately)
-                                  if (!column || value === null || value === undefined || columnKey === 'title') return null;
-                                  
-                                  // Format value based on type
-                                  let displayValue = value;
-                                  if (column.type === 'currency') {
-                                    displayValue = `$${value}M`;
-                                  } else if (column.type === 'percentage') {
-                                    const roi = item.projectedRevenue && (item.productionBudget + item.marketingBudget) 
-                                      ? ((item.projectedRevenue - item.productionBudget - item.marketingBudget) / (item.productionBudget + item.marketingBudget) * 100).toFixed(0)
-                                      : 0;
-                                    displayValue = `${roi}%`;
-                                  } else if (column.type === 'date' && value) {
-                                    displayValue = new Date(value).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
-                                  }
-                                  
-                                  return (
-                                    <div key={columnKey} className="detail">
-                                      <span className="detail-label">{column.label}:</span>
-                                      <span className="detail-value">
-                                        {displayValue}
-                                      </span>
-                                    </div>
-                                  );
-                                })}
-                              </div>
-                            </>
-                          )}
-                        </div>
+                          onEditStart={handleEditStart}
+                          onEditSave={handleEditSave}
+                          onEditCancel={handleEditCancel}
+                          onEditChange={handleEditChange}
+                          onOpenCard={handleOpenItemCard}
+                          isDragging={draggedItem === item.id}
+                        />
                       ))}
                     </div>
                   </div>
@@ -2382,85 +2534,12 @@ const WBDExecutiveSlateDashboard = () => {
             </div>
             <div className="chart-container" ref={chartRef}>
               {ResponsiveContainer && ComposedChart ? (
-                <ResponsiveContainer width="100%" height={300}>
-                  <ComposedChart data={getMovingAverage(chartData, 'revenue', 2)} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
-                    <CartesianGrid strokeDasharray="3 3" stroke={WBD_THEME.colors.grayLight} opacity={0.3} />
-                    <XAxis 
-                      dataKey="year" 
-                      stroke={WBD_THEME.colors.white}
-                      fontSize={14}
-                      fontFamily="Inter, sans-serif"
-                    />
-                    <YAxis 
-                      yAxisId="financial"
-                      stroke={WBD_THEME.colors.white}
-                      fontSize={12}
-                      fontFamily="Inter, sans-serif"
-                    />
-                    <YAxis 
-                      yAxisId="roi"
-                      orientation="right"
-                      stroke={WBD_THEME.colors.success}
-                      fontSize={12}
-                      fontFamily="Inter, sans-serif"
-                    />
-                    <Tooltip 
-                      contentStyle={{
-                        backgroundColor: WBD_THEME.colors.dark,
-                        border: `1px solid ${WBD_THEME.colors.gold}`,
-                        borderRadius: '8px',
-                        color: WBD_THEME.colors.white,
-                        fontFamily: "Inter, sans-serif"
-                      }}
-                      formatter={(value, name, props) => {
-                        if (name === 'roi') return [`${value.toFixed(1)}%`, 'ROI'];
-                        if (name === 'revenue') {
-                          const idx = props.payload && props.payload.year ? chartData.findIndex(d => d.year === props.payload.year) : -1;
-                          let yoy = 0;
-                          if (idx > 0) {
-                            const prev = chartData[idx - 1].revenue;
-                            yoy = prev ? ((value - prev) / prev) * 100 : 0;
-                          }
-                          return [`${value}M (${yoy >= 0 ? '+' : ''}${yoy.toFixed(1)}% YoY)`, 'Revenue'];
-                        }
-                        if (name === 'investment') return [`${value}M`, 'Investment'];
-                        if (name === 'revenueMA') return [`${value.toFixed(1)}M`, 'Revenue MA'];
-                        return [value, name];
-                      }}
-                    />
-                    <Bar 
-                      yAxisId="financial"
-                      dataKey="investment" 
-                      fill={WBD_THEME.colors.gold}
-                      opacity={0.8}
-                    />
-                    <Bar 
-                      yAxisId="financial"
-                      dataKey="revenue" 
-                      fill={WBD_THEME.colors.primary}
-                      radius={[4, 4, 0, 0]}
-                      opacity={0.9}
-                    />
-                    <Line 
-                      yAxisId="roi"
-                      type="monotone" 
-                      dataKey="roi" 
-                      stroke={WBD_THEME.colors.success}
-                      strokeWidth={3}
-                      dot={{ fill: WBD_THEME.colors.success, strokeWidth: 2, r: 6 }}
-                      activeDot={{ r: 8, stroke: WBD_THEME.colors.success, strokeWidth: 2 }}
-                    />
-                    <Line
-                      yAxisId="financial"
-                      type="monotone"
-                      dataKey="revenueMA"
-                      stroke="#8e44ad"
-                      strokeWidth={2}
-                      dot={false}
-                      strokeDasharray="6 4"
-                    />
-                  </ComposedChart>
-                </ResponsiveContainer>
+                <MemoizedChart 
+                  data={getMovingAverage(chartData, 'revenue', 2)} 
+                  showRevenue={showRevenue}
+                  showInvestment={showInvestment}
+                  showTrends={showTrends}
+                />
               ) : (
                 <SimpleChart data={chartData} />
               )}
