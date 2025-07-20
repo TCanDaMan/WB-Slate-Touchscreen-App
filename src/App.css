@@ -139,6 +139,7 @@
 }
 
 /* Dark Mode Overrides */
+/* Dark Mode */
 body.dark-mode {
   --wbd-primary: #4a90e2;
   --wbd-primary-deep: #1a6dcc;
@@ -1780,6 +1781,244 @@ body.dark-mode .timeline-zoom-btn {
 body.dark-mode .timeline-zoom-btn:hover {
   background: rgba(255, 255, 255, 0.1);
   border-color: var(--wbd-gold);
+}
+
+/* Night Mode - Ultra Dark Theme */
+body.night-mode {
+  --wbd-primary: #8b5cf6;
+  --wbd-primary-deep: #6d28d9;
+  --wbd-primary-light: #a78bfa;
+  --wbd-gold: #fbbf24;
+  --wbd-gold-light: #fcd34d;
+  --wbd-dark: #000000;
+  --wbd-gray: #111111;
+  --wbd-gray-light: #1a1a1a;
+  --wbd-white: #e0e0e0;
+  --wbd-success: #10b981;
+  --wbd-error: #ef4444;
+  --wbd-warning: #f59e0b;
+  --wbd-info: #3b82f6;
+  --bg-primary: #000000;
+  --bg-secondary: #0a0a0a;
+  --bg-tertiary: #141414;
+  --text-primary: #e0e0e0;
+  --text-secondary: #a0a0a0;
+  --border-color: #2a2a2a;
+}
+
+body.night-mode .wbd-dashboard {
+  background: #000000;
+  color: var(--text-primary);
+}
+
+body.night-mode .year-column {
+  background: linear-gradient(145deg, #0a0a0a 0%, #141414 100%);
+  border-color: var(--border-color);
+  box-shadow: 0 4px 20px rgba(139, 92, 246, 0.1);
+}
+
+body.night-mode .title-card {
+  background: #0f0f0f;
+  border-color: #2a2a2a;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.5);
+}
+
+body.night-mode .title-card:hover {
+  background: #1a1a1a;
+  border-color: var(--wbd-primary);
+  box-shadow: 0 4px 20px rgba(139, 92, 246, 0.3);
+}
+
+body.night-mode .analytics-section {
+  background: linear-gradient(145deg, #0a0a0a 0%, #141414 100%);
+  border-color: var(--border-color);
+}
+
+body.night-mode .tab {
+  background: rgba(139, 92, 246, 0.1);
+  color: var(--wbd-primary-light);
+  border-color: var(--wbd-primary);
+}
+
+body.night-mode .tab.active {
+  background: var(--wbd-primary);
+  color: #000000;
+  border-color: var(--wbd-primary-light);
+}
+
+body.night-mode .executive-summary {
+  background: rgba(139, 92, 246, 0.08);
+  color: var(--wbd-primary-light);
+}
+
+body.night-mode .theme-toggle-button {
+  background: rgba(139, 92, 246, 0.1);
+  border-color: var(--wbd-primary);
+  color: var(--wbd-primary-light);
+}
+
+body.night-mode .theme-toggle-button:hover {
+  background: rgba(139, 92, 246, 0.2);
+  box-shadow: 0 0 20px rgba(139, 92, 246, 0.3);
+}
+
+/* Touch-Optimized Tab Navigation */
+.dashboard-tabs.touch-optimized {
+  display: flex;
+  gap: 16px;
+  margin: 24px 0;
+  padding: 0 24px;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.dashboard-tabs.touch-optimized .tab {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 16px 32px;
+  min-width: 150px;
+  white-space: nowrap;
+}
+
+.tab-icon {
+  font-size: 28px;
+}
+
+.tab-label {
+  font-size: 16px;
+  font-weight: 600;
+}
+
+/* Customize Section */
+.customize-section {
+  padding: 32px;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.customize-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+  gap: 24px;
+  margin-top: 32px;
+}
+
+.customize-card {
+  background: rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 16px;
+  padding: 32px;
+  transition: all 0.3s ease;
+}
+
+.customize-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+}
+
+.customize-card h4 {
+  font-size: 20px;
+  margin-bottom: 24px;
+  color: var(--wbd-primary);
+}
+
+.theme-selector {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.theme-option {
+  padding: 16px 24px;
+  border: 2px solid rgba(255, 255, 255, 0.2);
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--wbd-white);
+  font-size: 16px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  min-height: 60px;
+  min-width: 120px;
+}
+
+.theme-option:hover {
+  background: rgba(255, 255, 255, 0.1);
+  transform: translateY(-2px);
+}
+
+.theme-option.active {
+  background: var(--wbd-primary);
+  border-color: var(--wbd-primary);
+  color: white;
+}
+
+.option-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.touch-checkbox {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 16px;
+  cursor: pointer;
+  padding: 12px;
+  border-radius: 8px;
+  transition: background 0.2s ease;
+}
+
+.touch-checkbox:hover {
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.touch-checkbox input[type="checkbox"] {
+  width: 24px;
+  height: 24px;
+  cursor: pointer;
+}
+
+.year-range-selector {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.year-range-btn {
+  padding: 16px 24px;
+  border: 2px solid var(--wbd-primary);
+  border-radius: 12px;
+  background: transparent;
+  color: var(--wbd-primary);
+  font-size: 16px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  min-height: 60px;
+}
+
+.year-range-btn:hover {
+  background: var(--wbd-primary);
+  color: white;
+  transform: translateY(-2px);
+}
+
+/* Night mode customize section */
+body.night-mode .customize-card {
+  background: rgba(139, 92, 246, 0.05);
+  border-color: rgba(139, 92, 246, 0.2);
+}
+
+body.night-mode .theme-option {
+  border-color: rgba(139, 92, 246, 0.3);
+}
+
+body.night-mode .year-range-btn {
+  border-color: var(--wbd-primary);
+  color: var(--wbd-primary-light);
 }
 
 /* Responsive timeline */

@@ -221,8 +221,13 @@ const WBDExecutiveSlateDashboard = () => {
   const [filterStatus, setFilterStatus] = useState('All');
   const [editingItem, setEditingItem] = useState(null);
   const [editValues, setEditValues] = useState({});
-  const [isDarkMode, setIsDarkMode] = useState(false);
+  const [themeMode, setThemeMode] = useState('regular'); // regular, dark, night
   const [activeTab, setActiveTab] = useState('summary');
+  const [showCustomization, setShowCustomization] = useState(false);
+  const [showRevenue, setShowRevenue] = useState(true);
+  const [showInvestment, setShowInvestment] = useState(true);
+  const [showTrends, setShowTrends] = useState(true);
+  const [yearRange, setYearRange] = useState([2024, 2025, 2026]);
   // const [selectedDateKey, setSelectedDateKey] = useState(); // Removed - not used
   const [columnMapping, setColumnMapping] = useState({});
   const [error, setError] = useState('');
@@ -1569,9 +1574,23 @@ const WBDExecutiveSlateDashboard = () => {
     }));
   };
 
-  const toggleDarkMode = () => {
-    setIsDarkMode(!isDarkMode);
-    document.body.classList.toggle('dark-mode');
+  const cycleTheme = () => {
+    const themes = ['regular', 'dark', 'night'];
+    const currentIndex = themes.indexOf(themeMode);
+    const nextIndex = (currentIndex + 1) % themes.length;
+    const nextTheme = themes[nextIndex];
+    
+    setThemeMode(nextTheme);
+    
+    // Remove all theme classes
+    document.body.classList.remove('dark-mode', 'night-mode');
+    
+    // Add appropriate class
+    if (nextTheme === 'dark') {
+      document.body.classList.add('dark-mode');
+    } else if (nextTheme === 'night') {
+      document.body.classList.add('night-mode');
+    }
   };
 
   // Helper to calculate YoY growth
@@ -1852,8 +1871,13 @@ const WBDExecutiveSlateDashboard = () => {
                 {uniqueStatuses.map(status => <option key={status} value={status}>{status}</option>)}
               </select>
             </div>
-            <button onClick={toggleDarkMode} title={isDarkMode ? "Switch to Light Mode" : "Switch to Dark Mode"} className="icon-button">
-              {isDarkMode ? "☀️" : "🌙"}
+            <button 
+              onClick={cycleTheme} 
+              title={`Current: ${themeMode} mode`} 
+              className="icon-button theme-button"
+              style={{ minWidth: '60px', minHeight: '60px' }}
+            >
+              {themeMode === 'regular' ? '☀️' : themeMode === 'dark' ? '🌙' : '🌌'}
             </button>
             <button onClick={() => setSettingsOpen(!settingsOpen)} className="primary-button">
               <span role="img" aria-label="settings">⚙️</span> Customize View
@@ -1911,11 +1935,40 @@ const WBDExecutiveSlateDashboard = () => {
         </div>
       )}
 
-      {/* Tab navigation UI */}
-      <div className="dashboard-tabs">
-        <button className={activeTab === 'summary' ? 'tab active' : 'tab'} onClick={() => setActiveTab('summary')}>Summary</button>
-        <button className={activeTab === 'financial' ? 'tab active' : 'tab'} onClick={() => setActiveTab('financial')}>Financial Chart</button>
-        <button className={activeTab === 'timeline' ? 'tab active' : 'tab'} onClick={() => setActiveTab('timeline')}>Timeline</button>
+      {/* Touch-friendly Tab Navigation */}
+      <div className="dashboard-tabs touch-optimized">
+        <button 
+          className={activeTab === 'summary' ? 'tab active' : 'tab'} 
+          onClick={() => setActiveTab('summary')}
+          style={{ minHeight: '60px', fontSize: '18px' }}
+        >
+          <span className="tab-icon">📊</span>
+          <span className="tab-label">Summary</span>
+        </button>
+        <button 
+          className={activeTab === 'financial' ? 'tab active' : 'tab'} 
+          onClick={() => setActiveTab('financial')}
+          style={{ minHeight: '60px', fontSize: '18px' }}
+        >
+          <span className="tab-icon">💰</span>
+          <span className="tab-label">Financial Chart</span>
+        </button>
+        <button 
+          className={activeTab === 'timeline' ? 'tab active' : 'tab'} 
+          onClick={() => setActiveTab('timeline')}
+          style={{ minHeight: '60px', fontSize: '18px' }}
+        >
+          <span className="tab-icon">📅</span>
+          <span className="tab-label">Timeline</span>
+        </button>
+        <button 
+          className={activeTab === 'customize' ? 'tab active' : 'tab'} 
+          onClick={() => setActiveTab('customize')}
+          style={{ minHeight: '60px', fontSize: '18px' }}
+        >
+          <span className="tab-icon">⚙️</span>
+          <span className="tab-label">Customize</span>
+        </button>
       </div>
 
       {/* Tab Content */}
@@ -2386,6 +2439,106 @@ const WBDExecutiveSlateDashboard = () => {
               <p>Timeline view is temporarily disabled</p>
             </div>
           )}
+        </div>
+      )}
+
+      {activeTab === 'customize' && (
+        <div className="customize-section">
+          <h3 className="section-title">Customize Dashboard</h3>
+          
+          <div className="customize-grid">
+            {/* Theme Selection */}
+            <div className="customize-card">
+              <h4>Theme Mode</h4>
+              <div className="theme-selector">
+                <button 
+                  className={`theme-option ${themeMode === 'regular' ? 'active' : ''}`}
+                  onClick={() => {
+                    setThemeMode('regular');
+                    document.body.classList.remove('dark-mode', 'night-mode');
+                  }}
+                >
+                  ☀️ Regular
+                </button>
+                <button 
+                  className={`theme-option ${themeMode === 'dark' ? 'active' : ''}`}
+                  onClick={() => {
+                    setThemeMode('dark');
+                    document.body.classList.remove('night-mode');
+                    document.body.classList.add('dark-mode');
+                  }}
+                >
+                  🌙 Dark
+                </button>
+                <button 
+                  className={`theme-option ${themeMode === 'night' ? 'active' : ''}`}
+                  onClick={() => {
+                    setThemeMode('night');
+                    document.body.classList.remove('dark-mode');
+                    document.body.classList.add('night-mode');
+                  }}
+                >
+                  🌌 Night
+                </button>
+              </div>
+            </div>
+
+            {/* Display Options */}
+            <div className="customize-card">
+              <h4>Display Options</h4>
+              <div className="option-list">
+                <label className="touch-checkbox">
+                  <input 
+                    type="checkbox" 
+                    checked={showRevenue} 
+                    onChange={(e) => setShowRevenue(e.target.checked)}
+                  />
+                  <span>Show Revenue Data</span>
+                </label>
+                <label className="touch-checkbox">
+                  <input 
+                    type="checkbox" 
+                    checked={showInvestment} 
+                    onChange={(e) => setShowInvestment(e.target.checked)}
+                  />
+                  <span>Show Investment Data</span>
+                </label>
+                <label className="touch-checkbox">
+                  <input 
+                    type="checkbox" 
+                    checked={showTrends} 
+                    onChange={(e) => setShowTrends(e.target.checked)}
+                  />
+                  <span>Show Trend Indicators</span>
+                </label>
+              </div>
+            </div>
+
+            {/* Year Range */}
+            <div className="customize-card">
+              <h4>Year Range</h4>
+              <div className="year-range-selector">
+                <button 
+                  className="year-range-btn"
+                  onClick={() => setYearRange([2024, 2025, 2026])}
+                >
+                  2024-2026
+                </button>
+                <button 
+                  className="year-range-btn"
+                  onClick={() => setYearRange([2024, 2025, 2026, 2027])}
+                >
+                  2024-2027
+                </button>
+                <button 
+                  className="year-range-btn"
+                  onClick={() => setYearRange([2025, 2026, 2027, 2028])}
+                >
+                  2025-2028
+                </button>
+              </div>
+            </div>
+          </div>
         </div>
       )}
 
