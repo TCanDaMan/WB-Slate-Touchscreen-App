@@ -1272,17 +1272,50 @@ const WBDExecutiveSlateDashboard = () => {
     setChartData(chartDataArray);
   };
 
-  const handleTitleMove = async (itemId, newYear) => {
+  const handleTitleMove = async (itemId, newYear, targetPosition = null, insertAfter = false) => {
     try {
       setUpdating(true);
       const item = items.find(i => i.id === itemId);
       
-      // Optimistic update
-      const updatedItems = items.map(i => 
-        i.id === itemId ? { ...i, year: newYear } : i
-      );
+      // Create a new array with proper ordering
+      let updatedItems = [...items];
+      
+      // Remove the item from its current position
+      updatedItems = updatedItems.filter(i => i.id !== itemId);
+      
+      // Update the item's year
+      const movedItem = { ...item, year: newYear };
+      
+      if (targetPosition) {
+        // Find the target item's index in the filtered array
+        const targetIndex = updatedItems.findIndex(i => i.id === targetPosition);
+        
+        if (targetIndex !== -1) {
+          // Insert at the specific position
+          const insertIndex = insertAfter ? targetIndex + 1 : targetIndex;
+          updatedItems.splice(insertIndex, 0, movedItem);
+        } else {
+          // Fallback: add to the end of the target year
+          updatedItems.push(movedItem);
+        }
+      } else {
+        // No specific position, add to the end
+        updatedItems.push(movedItem);
+      }
+      
       setItems(updatedItems);
       calculateYearTotals(updatedItems);
+      
+      // Add success animation after DOM updates
+      setTimeout(() => {
+        const droppedCard = document.querySelector(`[data-item-id="${itemId}"]`);
+        if (droppedCard) {
+          droppedCard.classList.add('drop-success');
+          setTimeout(() => {
+            droppedCard.classList.remove('drop-success');
+          }, 800);
+        }
+      }, 50);
       
       if (item.id.startsWith('sample')) {
         // Sample data - show preview notice
@@ -1351,7 +1384,9 @@ const WBDExecutiveSlateDashboard = () => {
 
   const handleDragEnd = (e) => {
     setDraggedItem(null);
-    // setDraggedOverYear(null); // Removed - not used
+    // Clean up all visual indicators
+    document.querySelectorAll('.year-column').forEach(col => col.classList.remove('drag-over'));
+    document.querySelectorAll('.title-card').forEach(card => card.classList.remove('drop-indicator', 'drop-indicator-below'));
   };
 
   const handleDragOver = (e) => {
@@ -1359,11 +1394,52 @@ const WBDExecutiveSlateDashboard = () => {
     if (e.dataTransfer) {
       e.dataTransfer.dropEffect = 'move';
     }
-    e.currentTarget.classList.add('drag-over');
+    
+    const yearColumn = e.currentTarget;
+    yearColumn.classList.add('drag-over');
+    
+    // Get mouse position relative to the year column
+    const mouseY = e.clientY;
+    const titlesList = yearColumn.querySelector('.titles-list');
+    const cards = Array.from(titlesList.querySelectorAll('.title-card:not(.dragging)'));
+    
+    // Remove all previous drop indicators
+    document.querySelectorAll('.title-card').forEach(card => {
+      card.classList.remove('drop-indicator', 'drop-indicator-below');
+    });
+    
+    if (cards.length === 0) return;
+    
+    // Find the card to insert before
+    let targetCard = null;
+    let insertBelow = false;
+    
+    for (let i = 0; i < cards.length; i++) {
+      const card = cards[i];
+      const rect = card.getBoundingClientRect();
+      const cardMiddle = rect.top + rect.height / 2;
+      
+      if (mouseY < cardMiddle) {
+        targetCard = card;
+        break;
+      } else if (i === cards.length - 1) {
+        // Insert after the last card
+        targetCard = card;
+        insertBelow = true;
+      }
+    }
+    
+    if (targetCard) {
+      targetCard.classList.add(insertBelow ? 'drop-indicator-below' : 'drop-indicator');
+    }
   };
 
   const handleDragLeave = (e) => {
     e.currentTarget.classList.remove('drag-over');
+    // Clean up drop indicators when leaving a column
+    if (e.currentTarget.classList.contains('year-column')) {
+      e.currentTarget.querySelectorAll('.title-card').forEach(card => card.classList.remove('drop-indicator'));
+    }
   };
 
   const handleDrop = (e, year) => {
@@ -1376,10 +1452,22 @@ const WBDExecutiveSlateDashboard = () => {
     }
     
     if (itemId) {
-      handleTitleMove(itemId, year);
+      // Find the target position based on which card has the drop indicator
+      const targetCard = e.currentTarget.querySelector('.title-card.drop-indicator, .title-card.drop-indicator-below');
+      let targetPosition = null;
+      let insertAfter = false;
+      
+      if (targetCard) {
+        targetPosition = targetCard.getAttribute('data-item-id');
+        insertAfter = targetCard.classList.contains('drop-indicator-below');
+      }
+      
+      handleTitleMove(itemId, year, targetPosition, insertAfter);
     }
     setDraggedItem(null);
-    // setDraggedOverYear(null); // Removed - not used
+    // Clean up all visual indicators
+    document.querySelectorAll('.year-column').forEach(col => col.classList.remove('drag-over'));
+    document.querySelectorAll('.title-card').forEach(card => card.classList.remove('drop-indicator', 'drop-indicator-below'));
   };
 
   // Touch-specific handlers for Framer Motion
@@ -1398,8 +1486,18 @@ const WBDExecutiveSlateDashboard = () => {
       const yearColumn = dropTarget.closest('.year-column');
       if (yearColumn) {
         const year = yearColumn.getAttribute('data-year');
-        if (year && year !== items.find(item => item.id === itemId)?.[columnMapping.year]) {
-          handleTitleMove(itemId, year);
+        if (year && year !== items.find(item => item.id === itemId)?.year) {
+          // Find the target position based on which card has the drop indicator
+          const targetCard = yearColumn.querySelector('.title-card.drop-indicator, .title-card.drop-indicator-below');
+          let targetPosition = null;
+          let insertAfter = false;
+          
+          if (targetCard) {
+            targetPosition = targetCard.getAttribute('data-item-id');
+            insertAfter = targetCard.classList.contains('drop-indicator-below');
+          }
+          
+          handleTitleMove(itemId, year, targetPosition, insertAfter);
         }
       }
     }
@@ -1808,11 +1906,11 @@ const WBDExecutiveSlateDashboard = () => {
     );
   }
 
-  const itemsByYear = filteredItems.reduce((acc, item) => {
-    if (!acc[item.year]) acc[item.year] = [];
-    acc[item.year].push(item);
-    return acc;
-  }, {});
+  // Organize items by year while preserving order
+  const itemsByYear = {};
+  YEARS.forEach(year => {
+    itemsByYear[year] = filteredItems.filter(item => item.year === year);
+  });
 
   return (
     <div className="wbd-dashboard">
@@ -1985,6 +2083,7 @@ const WBDExecutiveSlateDashboard = () => {
                       {(itemsByYear[year] || []).map(item => (
                         <div
                           key={item.id}
+                          data-item-id={item.id}
                           className={`title-card ${draggedItem === item.id ? 'dragging' : ''} ${editingItem === item.id ? 'editing' : ''}`}
                           draggable={editingItem !== item.id}
                           onDragStart={(e) => handleDragStart(e, item.id)}
@@ -2036,11 +2135,41 @@ const WBDExecutiveSlateDashboard = () => {
                               clone.style.pointerEvents = 'none';
                               const elementBelow = document.elementFromPoint(touch.clientX, touch.clientY);
                               const yearColumn = elementBelow?.closest('.year-column');
+                              const cardBelow = elementBelow?.closest('.title-card');
                               
                               // Remove previous hover states
                               document.querySelectorAll('.year-column').forEach(col => col.classList.remove('drag-over'));
+                              document.querySelectorAll('.title-card').forEach(card => card.classList.remove('drop-indicator', 'drop-indicator-below'));
+                              
                               if (yearColumn) {
                                 yearColumn.classList.add('drag-over');
+                                
+                                // Get touch position and find cards in the year column
+                                const titlesList = yearColumn.querySelector('.titles-list');
+                                const cards = Array.from(titlesList.querySelectorAll('.title-card:not(.dragging)'));
+                                
+                                if (cards.length > 0) {
+                                  let targetCard = null;
+                                  let insertBelow = false;
+                                  
+                                  for (let i = 0; i < cards.length; i++) {
+                                    const card = cards[i];
+                                    const rect = card.getBoundingClientRect();
+                                    const cardMiddle = rect.top + rect.height / 2;
+                                    
+                                    if (touch.clientY < cardMiddle) {
+                                      targetCard = card;
+                                      break;
+                                    } else if (i === cards.length - 1) {
+                                      targetCard = card;
+                                      insertBelow = true;
+                                    }
+                                  }
+                                  
+                                  if (targetCard && targetCard !== e.currentTarget) {
+                                    targetCard.classList.add(insertBelow ? 'drop-indicator-below' : 'drop-indicator');
+                                  }
+                                }
                               }
                             }
                           }}
@@ -2056,12 +2185,23 @@ const WBDExecutiveSlateDashboard = () => {
                               if (yearColumn) {
                                 const year = yearColumn.getAttribute('data-year');
                                 if (year) {
-                                  handleTitleMove(item.id, year);
+                                  // Find the target position based on which card has the drop indicator
+                                  const targetCard = yearColumn.querySelector('.title-card.drop-indicator, .title-card.drop-indicator-below');
+                                  let targetPosition = null;
+                                  let insertAfter = false;
+                                  
+                                  if (targetCard) {
+                                    targetPosition = targetCard.getAttribute('data-item-id');
+                                    insertAfter = targetCard.classList.contains('drop-indicator-below');
+                                  }
+                                  
+                                  handleTitleMove(item.id, year, targetPosition, insertAfter);
                                 }
                               }
                               
                               clone.remove();
                               document.querySelectorAll('.year-column').forEach(col => col.classList.remove('drag-over'));
+                              document.querySelectorAll('.title-card').forEach(card => card.classList.remove('drop-indicator', 'drop-indicator-below'));
                               e.currentTarget.style.opacity = '1';
                               setDraggedItem(null);
                             }
@@ -2131,6 +2271,14 @@ const WBDExecutiveSlateDashboard = () => {
                           ) : (
                             // View Mode
                             <>
+                              <button 
+                                onClick={(e) => handleEditStart(item, e)}
+                                className="edit-button edit-button-top"
+                                title="Edit item"
+                              >
+                                🫳
+                              </button>
+                              
                               <div className="badges-row" style={{ marginBottom: 8 }}>
                                 {item.status && <span className="badge status">{item.status}</span>}
                                 {item.type && <span className="badge type">{item.type}</span>}
@@ -2169,17 +2317,6 @@ const WBDExecutiveSlateDashboard = () => {
                                     </div>
                                   );
                                 })}
-                              </div>
-                              
-                              <div className="title-meta">
-                                <span className="title-type">{item.type}</span>
-                                <button 
-                                  onClick={(e) => handleEditStart(item, e)}
-                                  className="edit-button"
-                                  title="Edit item"
-                                >
-                                  🫳
-                                </button>
                               </div>
                             </>
                           )}

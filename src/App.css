@@ -784,13 +784,18 @@ body {
   }
 }
 
-/* Year Header */
+/* Year Header - Fixed at top of column */
 .year-header {
   text-align: center;
-  margin-bottom: 8px;
-  padding-bottom: 8px;
-  border-bottom: 1px solid rgba(212, 175, 55, 0.1);
+  padding: 12px;
+  background: linear-gradient(135deg, rgba(26,35,48,1), rgba(31,41,55,0.98));
+  border-bottom: 2px solid rgba(212, 175, 55, 0.2);
   flex-shrink: 0;
+  position: sticky;
+  top: 0;
+  z-index: 5;
+  backdrop-filter: blur(10px);
+  border-radius: 16px 16px 0 0;
 }
 
 .year-title {
@@ -863,13 +868,15 @@ body {
   flex-shrink: 0;
 }
 
-/* Title Cards */
+/* Title Cards - Scrollable list */
 .titles-list {
   flex: 1;
   overflow-y: auto;
   overflow-x: hidden;
-  padding-right: 4px;
+  padding: 8px 12px;
   -webkit-overflow-scrolling: touch;
+  scroll-behavior: smooth;
+  position: relative;
 }
 
 /* Custom scrollbar for titles list */
@@ -898,7 +905,7 @@ body {
   padding: 8px 10px;
   margin: 4px 0;
   border: 1px solid rgba(255,255,255,0.08);
-  transition: box-shadow 0.2s, transform 0.15s, border 0.15s;
+  transition: box-shadow 0.2s, transform 0.15s, border 0.15s, margin 0.3s ease;
   position: relative;
   overflow: visible;
   will-change: transform, box-shadow;
@@ -912,6 +919,79 @@ body {
   user-select: none;
   -webkit-touch-callout: none;
   cursor: grab;
+}
+
+/* Space out cards when dragging over */
+.title-card.drop-indicator {
+  margin-top: 50px;
+  transition: margin 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+}
+
+.title-card.drop-indicator-below {
+  margin-bottom: 50px;
+  transition: margin 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+}
+
+/* Visual indicator line above the card that will be displaced */
+.title-card.drop-indicator::before {
+  content: '';
+  position: absolute;
+  top: -25px;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, transparent, var(--wbd-gold), transparent);
+  border-radius: 2px;
+  animation: drop-pulse 1s ease-in-out infinite;
+  box-shadow: 0 0 12px var(--wbd-gold);
+}
+
+/* Visual indicator line below the card for bottom insertion */
+.title-card.drop-indicator-below::after {
+  content: '';
+  position: absolute;
+  bottom: -25px;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, transparent, var(--wbd-gold), transparent);
+  border-radius: 2px;
+  animation: drop-pulse 1s ease-in-out infinite;
+  box-shadow: 0 0 12px var(--wbd-gold);
+}
+
+@keyframes drop-pulse {
+  0%, 100% { 
+    opacity: 0.3;
+    transform: scaleX(0.8);
+  }
+  50% { 
+    opacity: 1;
+    transform: scaleX(1);
+  }
+}
+
+/* Success animation when card is dropped */
+.title-card.drop-success {
+  animation: dropSuccess 0.8s ease-out;
+  background: linear-gradient(135deg, rgba(212, 175, 55, 0.2), rgba(44, 62, 80, 0.95));
+}
+
+@keyframes dropSuccess {
+  0% {
+    transform: scale(1);
+    box-shadow: 0 6px 20px rgba(0,0,0,0.15), 0 1px 4px rgba(0,0,0,0.08);
+  }
+  30% {
+    transform: scale(1.05);
+    box-shadow: 0 10px 40px rgba(212, 175, 55, 0.4), 0 0 20px rgba(212, 175, 55, 0.3);
+  }
+  100% {
+    transform: scale(1);
+    box-shadow: 0 6px 20px rgba(0,0,0,0.15), 0 1px 4px rgba(0,0,0,0.08);
+  }
 }
 
 .title-card:hover {
@@ -1460,6 +1540,28 @@ body {
 .edit-button:hover {
   opacity: 1;
   background: rgba(212, 175, 55, 0.1);
+  transform: scale(1.1);
+}
+
+/* Edit button positioned at top right inside card */
+.edit-button-top {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  background: transparent;
+  border: none;
+  padding: 4px;
+  min-width: 28px;
+  min-height: 28px;
+  z-index: 10;
+  opacity: 0.6;
+  font-size: 0.85rem;
+  transition: all 0.2s ease;
+  cursor: pointer;
+}
+
+.edit-button-top:hover {
+  opacity: 1;
   transform: scale(1.1);
 }
 
@@ -2854,6 +2956,10 @@ body.night-mode .action-button {
 
 .year-column.card {
   animation: fadeInUp 0.7s cubic-bezier(0.23, 1, 0.32, 1);
+  display: flex;
+  flex-direction: column;
+  padding: 0; /* Remove padding for sticky header */
+  overflow: hidden;
 }
 
 /* --- Responsive Tweaks --- */
