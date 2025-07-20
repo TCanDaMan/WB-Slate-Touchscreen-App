@@ -1841,7 +1841,7 @@ const WBDExecutiveSlateDashboard = () => {
         </div>
       )}
       {/* Executive Header with Settings */}
-      <Box className="card" style={{ marginBottom: 20, padding: 24 }}>
+      <Box className="card" style={{ marginBottom: 16, padding: '16px 20px' }}>
         <div className="wbd-header">
           <div className="wbd-logo-area">
             <div className="wbd-shield">WB</div>
@@ -1853,7 +1853,7 @@ const WBDExecutiveSlateDashboard = () => {
         </div>
         
         {/* Touch-friendly Tab Navigation - Moved to header */}
-        <div className="dashboard-tabs touch-optimized header-tabs" style={{ marginTop: '20px', marginBottom: '0' }}>
+        <div className="dashboard-tabs touch-optimized header-tabs" style={{ marginTop: '12px', marginBottom: '0' }}>
           <button 
             className={activeTab === 'summary' ? 'tab active' : 'tab'} 
             onClick={() => setActiveTab('summary')}

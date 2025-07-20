@@ -76,14 +76,15 @@
 }
 
 .monday-style-dropdown {
-  padding: 8px 12px;
+  padding: 6px 10px;
   border: 1px solid rgba(255, 255, 255, 0.2);
-  border-radius: 8px;
+  border-radius: 6px;
   background-color: rgba(255, 255, 255, 0.05);
   color: white;
-  font-size: 14px;
+  font-size: 13px;
   cursor: pointer;
   transition: all 0.2s;
+  height: 32px;
 }
 
 .monday-style-dropdown:hover {
@@ -292,23 +293,24 @@ body {
 }
 
 .dashboard-subtitle {
-  font-size: 1rem;
-  opacity: 0.85;
-  margin-top: 8px;
+  font-size: 0.85rem;
+  opacity: 0.75;
+  margin-top: 4px;
   font-weight: 400;
-  letter-spacing: 0.02em;
+  letter-spacing: 0.01em;
+  line-height: 1;
 }
 
 .header-controls {
   display: flex;
   align-items: center;
-  gap: 24px;
+  gap: 12px;
   flex-wrap: wrap;
 }
 
 .executive-metrics {
   display: flex;
-  gap: 12px;
+  gap: 8px;
   flex-wrap: wrap;
 }
 
@@ -758,20 +760,31 @@ body {
 }
 
 .title-details {
-  display: grid;
-  gap: 8px;
-  margin-bottom: 12px;
-  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-bottom: 8px;
 }
 
 .detail {
   display: inline-flex;
   align-items: center;
   gap: 4px;
-  font-size: 0.75rem;
+  font-size: 0.7rem;
   line-height: 1.2;
-  margin-right: 8px;
+  padding: 3px 8px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 6px;
+  margin-right: 4px;
+  margin-bottom: 4px;
   min-width: 0; /* Allow shrinking */
+  transition: all 0.2s;
+}
+
+.detail:hover {
+  background: rgba(255, 255, 255, 0.06);
+  border-color: rgba(255, 255, 255, 0.12);
 }
 
 .detail-label {
@@ -1922,7 +1935,7 @@ body.night-mode .theme-toggle-button:hover {
   width: 100%;
   justify-content: center;
   border-top: 1px solid rgba(212, 175, 55, 0.1);
-  padding-top: 16px;
+  padding-top: 10px;
 }
 
 .dashboard-tabs.touch-optimized .tab {
@@ -2638,18 +2651,19 @@ body.night-mode .action-button {
 
 /* --- Metrics & Summary --- */
 .executive-metrics .card {
-  background: #1e2a3a;
+  background: rgba(30, 42, 58, 0.8);
   color: #ffd600;
-  border-radius: 12px;
-  box-shadow: 0 2px 12px rgba(255,214,0,0.08);
-  font-size: 1.1rem;
+  border-radius: 8px;
+  box-shadow: 0 1px 4px rgba(255,214,0,0.08);
+  font-size: 0.85rem;
   font-weight: 600;
-  margin-right: 10px;
-  padding: 14px 18px;
+  margin-right: 0;
+  padding: 8px 12px;
   display: inline-block;
-  min-width: 120px;
+  min-width: auto;
   text-align: center;
   transition: box-shadow 0.2s, background 0.2s;
+  line-height: 1.2;
 }
 .executive-metrics .card:last-child { margin-right: 0; }
 
