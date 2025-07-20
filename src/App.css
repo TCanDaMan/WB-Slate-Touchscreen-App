@@ -541,13 +541,15 @@ body {
 .year-column {
   background: var(--wbd-gray); /* Simplified gradient for performance */
   border-radius: var(--border-radius-xl);
-  padding: 24px;
+  padding: 12px;
   border: 1px solid rgba(212, 175, 55, 0.15);
   transition: transform 0.2s ease-out; /* Faster, simpler transition */
-  min-height: 600px;
+  min-height: calc(100vh - 200px);
   position: relative;
   overflow: hidden;
   scroll-snap-align: start;
+  display: flex;
+  flex-direction: column;
   /* backdrop-filter: blur(10px); */ /* Removed for performance */
   /* will-change: transform, box-shadow; */ /* Removed for performance */
   z-index: 5; /* Above background but below cards */
@@ -604,19 +606,20 @@ body {
 /* Year Header */
 .year-header {
   text-align: center;
-  margin-bottom: 24px;
-  padding-bottom: 20px;
-  border-bottom: 1px solid rgba(212, 175, 55, 0.2);
+  margin-bottom: 8px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid rgba(212, 175, 55, 0.1);
+  flex-shrink: 0;
 }
 
 .year-title {
-  font-size: 2rem;
-  font-weight: 800;
+  font-size: 1.3rem;
+  font-weight: 700;
   background: linear-gradient(135deg, var(--wbd-gold) 0%, var(--wbd-gold-light) 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
-  margin: 0 0 16px 0;
+  margin: 0 0 6px 0;
   letter-spacing: -0.02em;
 }
 
@@ -652,9 +655,10 @@ body {
 }
 
 .financial-metric .value {
-  font-weight: 700;
-  font-size: 1.1rem;
+  font-weight: 600;
+  font-size: 0.8rem;
   color: var(--wbd-gold-light);
+  line-height: 1;
 }
 
 .financial-metric .value.positive {
@@ -667,33 +671,57 @@ body {
 
 .year-summary {
   text-align: center;
-  margin-top: 16px;
-  opacity: 0.9;
-  font-size: 0.875rem;
-  padding: 10px 12px;
-  background: rgba(26, 109, 204, 0.15);
-  border-radius: var(--border-radius-md);
-  border-left: 3px solid var(--wbd-gold);
+  margin-top: 6px;
+  opacity: 0.85;
+  font-size: 0.75rem;
+  padding: 6px 8px;
+  background: rgba(26, 109, 204, 0.1);
+  border-radius: 6px;
+  border-left: 2px solid var(--wbd-gold);
   font-weight: 500;
+  flex-shrink: 0;
 }
 
 /* Title Cards */
 .titles-list {
-  min-height: 350px;
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding-right: 4px;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Custom scrollbar for titles list */
+.titles-list::-webkit-scrollbar {
+  width: 6px;
+}
+
+.titles-list::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 3px;
+}
+
+.titles-list::-webkit-scrollbar-thumb {
+  background: rgba(212, 175, 55, 0.3);
+  border-radius: 3px;
+}
+
+.titles-list::-webkit-scrollbar-thumb:hover {
+  background: rgba(212, 175, 55, 0.5);
 }
 
 .title-card {
-  background: rgba(34, 40, 56, 0.98);
-  border-radius: 18px;
-  box-shadow: 0 6px 32px rgba(0,0,0,0.18);
-  padding: 24px 20px 20px 20px;
-  margin: 14px 0;
-  border: 1.5px solid rgba(255,255,255,0.10);
-  transition: box-shadow 0.25s, transform 0.18s, border 0.18s;
+  background: rgba(34, 40, 56, 0.95);
+  border-radius: 10px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  padding: 8px 10px;
+  margin: 4px 0;
+  border: 1px solid rgba(255,255,255,0.08);
+  transition: box-shadow 0.2s, transform 0.15s, border 0.15s;
   position: relative;
   overflow: visible;
   will-change: transform, box-shadow;
-  animation: fadeInUp 0.6s cubic-bezier(0.23, 1, 0.32, 1);
+  animation: fadeInUp 0.4s cubic-bezier(0.23, 1, 0.32, 1);
   
   /* Touch optimizations */
   touch-action: none;
@@ -706,17 +734,18 @@ body {
 }
 
 .title-card:hover {
-  box-shadow: 0 12px 40px rgba(26,109,204,0.18), 0 2px 8px rgba(255,255,255,0.04);
-  transform: translateY(-4px) scale(1.02);
+  box-shadow: 0 4px 12px rgba(26,109,204,0.15), 0 1px 4px rgba(255,255,255,0.04);
+  transform: translateY(-1px) scale(1.005);
   border-color: var(--wbd-gold-light);
 }
 
 .title-card .title-name {
-  font-size: 1.2rem;
-  font-weight: 700;
+  font-size: 0.9rem;
+  font-weight: 600;
   color: #ffd600;
-  margin-bottom: 10px;
+  margin-bottom: 4px;
   letter-spacing: -0.01em;
+  line-height: 1.1;
 }
 
 .title-details {
@@ -727,13 +756,12 @@ body {
 }
 
 .detail {
-  display: flex;
-  flex-direction: column;
+  display: inline-flex;
+  align-items: center;
   gap: 4px;
-  padding: 8px 12px;
-  background: rgba(255, 255, 255, 0.04);
-  border-radius: var(--border-radius-sm);
-  font-size: 0.875rem;
+  font-size: 0.75rem;
+  line-height: 1.2;
+  margin-right: 8px;
   min-width: 0; /* Allow shrinking */
 }
 
@@ -749,8 +777,8 @@ body {
 .detail-value {
   color: var(--wbd-gold-light);
   font-weight: 600;
-  font-size: 0.875rem;
-  line-height: 1.2;
+  font-size: 0.7rem;
+  line-height: 1;
   word-break: break-word;
   overflow-wrap: break-word;
 }
@@ -900,8 +928,8 @@ body {
   }
   
   .title-card {
-    padding: 24px;
-    margin: 14px 0;
+    padding: 10px 12px;
+    margin: 5px 0;
   }
   
   .year-column {
@@ -929,8 +957,8 @@ body {
   }
   
   .title-card {
-    padding: 28px;
-    margin: 16px 0;
+    padding: 12px 14px;
+    margin: 6px 0;
   }
   
   .year-title {
@@ -946,10 +974,10 @@ body {
 /* Touch optimizations for large screens */
 @media (min-width: 1600px) {
   .title-card {
-    min-height: 220px;
-    padding: 28px;
-    margin: 18px 0;
-    border-radius: var(--border-radius-xl);
+    min-height: auto;
+    padding: 12px 14px;
+    margin: 6px 0;
+    border-radius: 10px;
   }
   
   .title-card:hover {
@@ -2553,18 +2581,19 @@ body.night-mode .action-button {
 /* --- Badge Styles --- */
 .badge {
   display: inline-block;
-  padding: 4px 12px;
-  border-radius: 12px;
-  font-size: 0.85rem;
+  padding: 2px 6px;
+  border-radius: 6px;
+  font-size: 0.65rem;
   font-weight: 600;
-  margin-right: 8px;
-  margin-bottom: 4px;
-  letter-spacing: 0.03em;
-  background: #232b3b;
+  margin-right: 4px;
+  margin-bottom: 2px;
+  letter-spacing: 0.02em;
+  background: rgba(35, 43, 59, 0.6);
   color: #ffd600;
-  border: 1px solid #ffd600;
-  box-shadow: 0 1px 4px rgba(255,214,0,0.08);
+  border: 1px solid rgba(255, 214, 0, 0.4);
+  box-shadow: none;
   transition: background 0.2s, color 0.2s;
+  line-height: 1.2;
 }
 .badge.status {
   background: #1e2a3a;
@@ -2819,8 +2848,8 @@ div[style*="translate3d"] .title-card {
   }
   
   .title-card {
-    min-height: 100px;
-    padding: 20px;
+    min-height: auto;
+    padding: 10px 12px;
   }
   
   .drag-over {
@@ -2836,7 +2865,7 @@ div[style*="translate3d"] .title-card {
   and (-webkit-min-device-pixel-ratio: 2) {
   
   .title-card {
-    min-height: 120px;
+    min-height: auto;
   }
   
   .years-grid {
@@ -2847,9 +2876,9 @@ div[style*="translate3d"] .title-card {
 /* Large touchscreen optimizations (85" displays) */
 @media (min-width: 3840px) {
   .title-card {
-    min-height: 200px;
-    padding: 40px;
-    font-size: 1.5rem;
+    min-height: auto;
+    padding: 14px 16px;
+    font-size: 1rem;
   }
   
   .year-column {
