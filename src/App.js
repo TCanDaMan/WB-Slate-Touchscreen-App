@@ -212,7 +212,6 @@ const WBDExecutiveSlateDashboard = () => {
     // Default to executive preset
     return COLUMN_PRESETS.executive.columns;
   });
-  const [settingsOpen, setSettingsOpen] = useState(false);
   const [activePreset, setActivePreset] = useState('executive');
   const [draggedItem, setDraggedItem] = useState(null);
   const [chartData, setChartData] = useState([]);
@@ -1879,61 +1878,41 @@ const WBDExecutiveSlateDashboard = () => {
             >
               {themeMode === 'regular' ? '☀️' : themeMode === 'dark' ? '🌙' : '🌌'}
             </button>
-            <button onClick={() => setSettingsOpen(!settingsOpen)} className="primary-button">
-              <span role="img" aria-label="settings">⚙️</span> Customize View
+            <button 
+              onClick={() => setShowCustomization(!showCustomization)} 
+              className="customize-trigger-button"
+              style={{
+                background: 'linear-gradient(135deg, var(--wbd-primary) 0%, var(--wbd-primary-light) 100%)',
+                color: 'white',
+                border: 'none',
+                borderRadius: '16px',
+                padding: '16px 32px',
+                fontSize: '18px',
+                fontWeight: '600',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '12px',
+                boxShadow: '0 4px 20px rgba(26, 109, 204, 0.3)',
+                transition: 'all 0.3s ease',
+                minHeight: '60px'
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.transform = 'translateY(-2px)';
+                e.currentTarget.style.boxShadow = '0 6px 30px rgba(26, 109, 204, 0.4)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.transform = 'translateY(0)';
+                e.currentTarget.style.boxShadow = '0 4px 20px rgba(26, 109, 204, 0.3)';
+              }}
+            >
+              <span style={{ fontSize: '24px' }}>✨</span>
+              <span>Customize</span>
             </button>
           </div>
         </div>
       </Box>
 
-      {/* Settings Panel - Custom Modal */}
-      {settingsOpen && (
-        <div className="settings-modal-overlay" onClick={() => setSettingsOpen(false)}>
-          <div className="settings-modal" onClick={(e) => e.stopPropagation()}>
-            <div className="settings-modal-header">
-              <h3>Dashboard Configuration</h3>
-              <button className="close-button" onClick={() => setSettingsOpen(false)}>✕</button>
-            </div>
-            <div className="settings-content">
-          <div className="preset-section">
-            <h4>Quick Presets</h4>
-            <div className="preset-buttons">
-              {Object.entries(COLUMN_PRESETS).map(([key, preset]) => (
-                <Button
-                  key={key}
-                  kind={activePreset === key ? "primary" : "secondary"}
-                  onClick={() => handlePresetChange(key)}
-                  style={{ marginBottom: 8 }}
-                >
-                  {preset.label}
-                </Button>
-              ))}
-            </div>
-          </div>
-          <div className="column-section">
-            <h4>Visible Columns</h4>
-            <div className="column-toggles">
-              {Object.entries(AVAILABLE_COLUMNS).map(([key, column]) => (
-                <label key={key} className="column-toggle">
-                  <input
-                    type="checkbox"
-                    checked={visibleColumns.includes(key)}
-                    onChange={() => handleColumnToggle(key)}
-                  />
-                  <span className="column-label">{column.label}</span>
-                  <span className={`column-type ${column.type}`}>{column.type}</span>
-                </label>
-              ))}
-            </div>
-          </div>
-          <div style={{ display: 'flex', gap: 16, marginTop: 24 }}>
-            <Button kind="primary" onClick={() => setSettingsOpen(false)}>Save</Button>
-            <Button kind="secondary" onClick={() => setSettingsOpen(false)}>Cancel</Button>
-          </div>
-        </div>
-          </div>
-        </div>
-      )}
 
       {/* Touch-friendly Tab Navigation */}
       <div className="dashboard-tabs touch-optimized">
@@ -2548,6 +2527,140 @@ const WBDExecutiveSlateDashboard = () => {
           <div className="update-pulse"></div>
           <span>Syncing changes...</span>
         </div>
+      )}
+
+      {/* Modern Slide-out Customization Panel */}
+      <div className={`customization-panel ${showCustomization ? 'open' : ''}`}>
+        <div className="panel-header">
+          <h2>Customize Dashboard</h2>
+          <button 
+            className="panel-close"
+            onClick={() => setShowCustomization(false)}
+            style={{
+              background: 'transparent',
+              border: 'none',
+              fontSize: '32px',
+              cursor: 'pointer',
+              padding: '16px',
+              color: 'var(--wbd-white)',
+              transition: 'transform 0.2s ease'
+            }}
+            onMouseEnter={(e) => e.currentTarget.style.transform = 'rotate(90deg)'}
+            onMouseLeave={(e) => e.currentTarget.style.transform = 'rotate(0)'}
+          >
+            ✕
+          </button>
+        </div>
+
+        <div className="panel-content">
+          {/* Theme Selection */}
+          <div className="panel-section">
+            <h3>Theme Mode</h3>
+            <div className="theme-grid">
+              <button 
+                className={`theme-card ${themeMode === 'regular' ? 'active' : ''}`}
+                onClick={() => {
+                  setThemeMode('regular');
+                  document.body.classList.remove('dark-mode', 'night-mode');
+                }}
+              >
+                <div className="theme-preview regular-preview"></div>
+                <span>☀️ Regular</span>
+              </button>
+              <button 
+                className={`theme-card ${themeMode === 'dark' ? 'active' : ''}`}
+                onClick={() => {
+                  setThemeMode('dark');
+                  document.body.classList.remove('night-mode');
+                  document.body.classList.add('dark-mode');
+                }}
+              >
+                <div className="theme-preview dark-preview"></div>
+                <span>🌙 Dark</span>
+              </button>
+              <button 
+                className={`theme-card ${themeMode === 'night' ? 'active' : ''}`}
+                onClick={() => {
+                  setThemeMode('night');
+                  document.body.classList.remove('dark-mode');
+                  document.body.classList.add('night-mode');
+                }}
+              >
+                <div className="theme-preview night-preview"></div>
+                <span>🌌 Night</span>
+              </button>
+            </div>
+          </div>
+
+          {/* Display Options */}
+          <div className="panel-section">
+            <h3>Display Options</h3>
+            <div className="toggle-list">
+              <label className="toggle-item">
+                <span>Show Revenue Data</span>
+                <input 
+                  type="checkbox" 
+                  checked={showRevenue} 
+                  onChange={(e) => setShowRevenue(e.target.checked)}
+                  className="toggle-switch"
+                />
+              </label>
+              <label className="toggle-item">
+                <span>Show Investment Data</span>
+                <input 
+                  type="checkbox" 
+                  checked={showInvestment} 
+                  onChange={(e) => setShowInvestment(e.target.checked)}
+                  className="toggle-switch"
+                />
+              </label>
+              <label className="toggle-item">
+                <span>Show Trend Indicators</span>
+                <input 
+                  type="checkbox" 
+                  checked={showTrends} 
+                  onChange={(e) => setShowTrends(e.target.checked)}
+                  className="toggle-switch"
+                />
+              </label>
+            </div>
+          </div>
+
+          {/* Quick Actions */}
+          <div className="panel-section">
+            <h3>Quick Actions</h3>
+            <div className="action-buttons">
+              <button 
+                className="action-button"
+                onClick={() => {
+                  setFilterStatus('All');
+                  setFilterGenre('All');
+                  setActiveTab('summary');
+                  setShowCustomization(false);
+                }}
+              >
+                🔄 Reset Filters
+              </button>
+              <button 
+                className="action-button"
+                onClick={() => {
+                  exportToPPTX();
+                  setShowCustomization(false);
+                }}
+              >
+                📊 Export Report
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Overlay for panel */}
+      {showCustomization && (
+        <div 
+          className="customization-overlay"
+          onClick={() => setShowCustomization(false)}
+        />
       )}
     </div>
   );
