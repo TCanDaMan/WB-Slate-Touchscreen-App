@@ -227,6 +227,7 @@ const WBDExecutiveSlateDashboard = () => {
   const [editingItem, setEditingItem] = useState(null);
   const [editValues, setEditValues] = useState({});
   const [themeMode, setThemeMode] = useState('regular'); // regular, dark, night
+  const [dynamicColumns, setDynamicColumns] = useState({}); // Stores column info from Monday board
   const [activeTab, setActiveTab] = useState('summary');
   const [showCustomization, setShowCustomization] = useState(false);
   const [showRevenue, setShowRevenue] = useState(true);
@@ -789,6 +790,11 @@ const WBDExecutiveSlateDashboard = () => {
         query {
           boards(ids: [${boardId}]) {
             name
+            columns {
+              id
+              title
+              type
+            }
             items_page(limit: 500) {
               items {
                 id
@@ -797,6 +803,11 @@ const WBDExecutiveSlateDashboard = () => {
                   id
                   text
                   value
+                  column {
+                    id
+                    title
+                    type
+                  }
                 }
               }
             }
@@ -816,41 +827,143 @@ const WBDExecutiveSlateDashboard = () => {
         throw new Error('No board data found');
       }
       
+      // Create column type map for proper data parsing
+      const columnTypeMap = {};
+      const dynamicColumnInfo = {};
+      
+      board.columns.forEach(col => {
+        columnTypeMap[col.id] = { type: col.type, title: col.title };
+        
+        // Build dynamic column info for UI
+        const normalizedTitle = col.title.toLowerCase().replace(/\s+/g, '_');
+        
+        // Map to our internal column keys based on title matching
+        let internalKey = null;
+        if (normalizedTitle.includes('production') && normalizedTitle.includes('budget')) {
+          internalKey = 'productionBudget';
+        } else if (normalizedTitle.includes('development') && normalizedTitle.includes('budget')) {
+          internalKey = 'productionBudget'; // Map development budget to production budget
+        } else if (normalizedTitle.includes('marketing') && normalizedTitle.includes('budget')) {
+          internalKey = 'marketingBudget';
+        } else if (normalizedTitle.includes('projected') && normalizedTitle.includes('revenue')) {
+          internalKey = 'projectedRevenue';
+        } else if (normalizedTitle.includes('actual') && normalizedTitle.includes('revenue')) {
+          internalKey = 'actualRevenue';
+        } else if (normalizedTitle.includes('release') || normalizedTitle.includes('date')) {
+          internalKey = 'releaseDate';
+        } else if (normalizedTitle.includes('status')) {
+          internalKey = 'status';
+        } else if (normalizedTitle.includes('genre') || normalizedTitle.includes('type')) {
+          internalKey = 'genre';
+        } else if (normalizedTitle.includes('director')) {
+          internalKey = 'director';
+        } else if (normalizedTitle.includes('studio')) {
+          internalKey = 'studio';
+        } else if (normalizedTitle.includes('priority')) {
+          internalKey = 'priority';
+        } else if (normalizedTitle.includes('risk')) {
+          internalKey = 'riskLevel';
+        }
+        
+        if (internalKey) {
+          dynamicColumnInfo[internalKey] = {
+            label: col.title, // Use the actual column title from Monday
+            type: col.type === 'numbers' || col.type === 'numeric' ? 'currency' : 
+                  col.type === 'date' ? 'date' :
+                  col.type === 'status' ? 'status' : 'text',
+            mondayColumnId: col.id
+          };
+        }
+      });
+      
+      // Update dynamic columns state
+      setDynamicColumns(dynamicColumnInfo);
+      
       // Map Monday items to our format
       const mappedItems = board.items_page.items.map(item => {
-        // Create a map of column values
+        // Create maps for different value types
         const columnValues = {};
+        const parsedValues = {};
+        
         item.column_values.forEach(cv => {
+          const columnInfo = columnTypeMap[cv.id] || cv.column;
+          const columnType = columnInfo?.type;
+          const columnTitle = columnInfo?.title || cv.id;
+          
+          // Store raw text value
           columnValues[cv.id] = cv.text || '';
+          
+          // Parse based on column type
+          if (columnType === 'numbers' || columnType === 'numeric') {
+            // Parse number from value property
+            const numValue = parseFloat(cv.value) || parseFloat(cv.text) || 0;
+            parsedValues[cv.id] = numValue;
+          } else if (columnType === 'date') {
+            // Parse date from value property (usually JSON)
+            try {
+              const dateData = cv.value ? JSON.parse(cv.value) : null;
+              if (dateData && dateData.date) {
+                parsedValues[cv.id] = dateData.date;
+              }
+            } catch (e) {
+              // Fallback to text
+              parsedValues[cv.id] = cv.text;
+            }
+          } else if (columnType === 'status') {
+            // Parse status from value property
+            try {
+              const statusData = cv.value ? JSON.parse(cv.value) : null;
+              parsedValues[cv.id] = statusData?.label || cv.text || '';
+            } catch (e) {
+              parsedValues[cv.id] = cv.text || '';
+            }
+          } else {
+            // For other types, use text
+            parsedValues[cv.id] = cv.text || '';
+          }
+          
+          // Store by column title for easier access
+          const titleKey = columnTitle.toLowerCase().replace(/\s+/g, '_');
+          columnValues[titleKey] = parsedValues[cv.id] || columnValues[cv.id];
         });
         
         // Try to extract data with common column names (case-insensitive)
-        const getValue = (keys) => {
+        const getValue = (keys, isNumber = false) => {
           for (const key of keys) {
-            const value = Object.entries(columnValues).find(([k, v]) => 
+            // Check by column ID
+            const valueById = Object.entries(parsedValues).find(([k, v]) => 
               k.toLowerCase().includes(key.toLowerCase())
             )?.[1];
-            if (value) return value;
+            if (valueById !== undefined) return valueById;
+            
+            // Check by column title
+            const valueByTitle = Object.entries(columnValues).find(([k, v]) => 
+              k.toLowerCase().includes(key.toLowerCase())
+            )?.[1];
+            if (valueByTitle !== undefined) return valueByTitle;
           }
-          return null;
+          return isNumber ? 0 : null;
         };
         
         const year = getValue(['year', 'date', 'release']) || '2025';
-        const yearMatch = year.match(/\d{4}/);
+        const yearMatch = year.toString().match(/\d{4}/);
         
         return {
           id: item.id,
           name: item.name,
           year: yearMatch ? yearMatch[0] : '2025',
           genre: getValue(['genre', 'category', 'type']) || 'Drama',
-          productionBudget: parseInt(getValue(['production_budget', 'prod_budget', 'budget'])) || 100,
-          marketingBudget: parseInt(getValue(['marketing_budget', 'marketing', 'mktg'])) || 50,
-          projectedRevenue: parseInt(getValue(['projected_revenue', 'revenue', 'box_office'])) || 200,
+          productionBudget: getValue(['production_budget', 'prod_budget', 'budget', 'development_budget'], true),
+          marketingBudget: getValue(['marketing_budget', 'marketing', 'mktg'], true),
+          projectedRevenue: getValue(['projected_revenue', 'revenue', 'box_office'], true),
           status: getValue(['status', 'stage']) || 'Development',
           director: getValue(['director', 'filmmaker']) || 'TBD',
           type: getValue(['type', 'format']) || 'Feature Film',
           priority: getValue(['priority', 'importance']) || 'Medium',
-          riskLevel: getValue(['risk_level', 'risk']) || 'Medium'
+          riskLevel: getValue(['risk_level', 'risk']) || 'Medium',
+          releaseDate: getValue(['release_date', 'release', 'date']),
+          actualRevenue: getValue(['actual_revenue', 'actual'], true),
+          studio: getValue(['studio', 'production_company'])
         };
       });
       
@@ -2018,6 +2131,13 @@ const WBDExecutiveSlateDashboard = () => {
               {themeMode === 'regular' ? '☀️' : themeMode === 'dark' ? '🌙' : '🌌'}
             </button>
             <button 
+              onClick={() => fetchBoardData(boardId)} 
+              className="sync-button-compact"
+              title="Sync with Monday.com"
+            >
+              🔄 Sync
+            </button>
+            <button 
               onClick={() => setShowCustomization(!showCustomization)} 
               className="customize-button-compact"
             >
@@ -2292,8 +2412,9 @@ const WBDExecutiveSlateDashboard = () => {
                                   const column = AVAILABLE_COLUMNS[columnKey];
                                   const value = item[columnKey];
                                   
-                                  // Skip null/undefined values and title (shown separately)
-                                  if (!column || value === null || value === undefined || columnKey === 'title') return null;
+                                  // Skip null/undefined values, title (shown separately), and badges already shown above
+                                  if (!column || value === null || value === undefined || 
+                                      columnKey === 'title' || columnKey === 'priority' || columnKey === 'riskLevel') return null;
                                   
                                   // Format value based on type
                                   let displayValue = value;
@@ -2310,7 +2431,7 @@ const WBDExecutiveSlateDashboard = () => {
                                   
                                   return (
                                     <div key={columnKey} className="detail">
-                                      <span className="detail-label">{column.label}:</span>
+                                      <span className="detail-label">{dynamicColumns[columnKey]?.label || column.label}:</span>
                                       <span className="detail-value">
                                         {displayValue}
                                       </span>
@@ -2785,7 +2906,7 @@ const WBDExecutiveSlateDashboard = () => {
             <div className="column-toggle-list">
               {Object.entries(AVAILABLE_COLUMNS).map(([key, column]) => (
                 <label key={key} className="toggle-item">
-                  <span>{column.label}</span>
+                  <span>{dynamicColumns[key]?.label || column.label}</span>
                   <input 
                     type="checkbox" 
                     checked={visibleColumns.includes(key)} 

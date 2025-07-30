@@ -377,6 +377,28 @@ body {
   box-shadow: 0 4px 12px rgba(26, 109, 204, 0.3);
 }
 
+.sync-button-compact {
+  background: linear-gradient(135deg, #4CAF50 0%, #45a049 100%);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  padding: 6px 14px;
+  font-size: 0.85rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  min-height: 36px;
+}
+
+.sync-button-compact:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(76, 175, 80, 0.3);
+}
+
 /* Responsive breakpoints */
 @media (max-width: 1400px) {
   .wbd-header-single-line {
